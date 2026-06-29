@@ -1,0 +1,174 @@
+/* src/components/Sidebar/Sidebar.css */
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background: #40403f; /* Bauhaus */
+  color: #d5d3d1; /* Day On Mercury */
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  position: fixed;
+  left: 0;
+  top: 0;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+/* Logo Section */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px 24px 24px;
+  border-bottom: 1px solid #5e5c5c;
+}
+
+.logo-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.sidebar-logo h2 {
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: #d5d3d1;
+  margin: 0;
+}
+
+/* Navigation */
+.sidebar-nav {
+  list-style: none;
+  padding: 20px 0;
+  margin: 0;
+  flex: 1;
+}
+
+.sidebar-nav li {
+  margin: 2px 0;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 14px 24px;
+  color: #a1a0a2;
+  text-decoration: none;
+  font-size: 15px;
+  transition: all 0.25s ease;
+  border-left: 3px solid transparent;
+  gap: 14px;
+}
+
+.nav-link .nav-icon {
+  font-size: 24px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+  color: #a1a0a2;
+  transition: color 0.25s ease;
+}
+
+.nav-link .nav-text {
+  font-weight: 400;
+  letter-spacing: 0.5px;
+}
+
+.nav-link:hover {
+  background: #5e5c5c;
+  color: #d5d3d1;
+  border-left-color: #d5d3d1;
+}
+
+.nav-link:hover .nav-icon {
+  color: #d5d3d1;
+}
+
+.nav-link.active {
+  background: #5e5c5c;
+  color: #d5d3d1;
+  border-left-color: #d5d3d1;
+}
+
+.nav-link.active .nav-icon {
+  color: #d5d3d1;
+}
+
+/* Scrollbar styling */
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: #40403f;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #5e5c5c;
+  border-radius: 2px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 70px;
+    padding: 12px 0;
+  }
+
+  .sidebar-logo {
+    padding: 0 16px 20px 16px;
+    justify-content: center;
+  }
+
+  .sidebar-logo h2 {
+    display: none;
+  }
+
+  .logo-img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .nav-link {
+    padding: 14px 16px;
+    justify-content: center;
+  }
+
+  .nav-link .nav-text {
+    display: none;
+  }
+
+  .nav-link .nav-icon {
+    font-size: 28px;
+    width: auto;
+  }
+
+  .nav-link:hover .nav-text,
+  .nav-link.active .nav-text {
+    display: none;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+  .sidebar {
+    width: 60px;
+    padding: 8px 0;
+  }
+
+  .nav-link {
+    padding: 12px 12px;
+  }
+
+  .nav-link .nav-icon {
+    font-size: 24px;
+  }
+
+  .logo-img {
+    width: 30px;
+    height: 30px;
+  }
+}

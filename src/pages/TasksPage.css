@@ -1,0 +1,11 @@
+/* src/pages/TasksPage.css */
+.tasks-page {
+  width: 100%;
+}
+
+.page-container {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 8px rgba(23, 24, 23, 0.08);
+}
