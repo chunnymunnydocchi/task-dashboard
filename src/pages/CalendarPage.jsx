@@ -1,13 +1,10 @@
-// src/pages/CalendarPage.jsx
+import Calendar from '../components/Calendar/Calendar';
 import './CalendarPage.css';
 
 function CalendarPage() {
   return (
     <div className="calendar-page">
-      <div className="calendar-container">
-        <h1>Calendar</h1>
-        <p>Coming soon!</p>
-      </div>
+      <Calendar />
     </div>
   );
 }

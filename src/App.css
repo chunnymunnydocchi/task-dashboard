@@ -1,12 +1,30 @@
 /* src/App.css */
 /*I added this root so that you would know our color scheme*/
-:root{
+:root {
+  /* Original Grayscale */
   --day-on-mercury: #d5d3d1;
   --artificial-intelligence-grey: #a1a0a2;
   --grey: #807e80;
   --iron-fixture: #5e5c5c;
   --bauhaus: #40403f;
   --cynical-black: #171817;
+  
+  /* New Warm Colors - ADD THESE! */
+  --warm-cream: #f5f0e8;
+  --warm-paper: #ede7dd;
+  --warm-border: #e0d6c8;
+  
+  --green-mint: #7cb8a0;
+  --green-forest: #4a8c72;
+  --green-dark: #2d5d4b;
+  
+  --red-coral: #d4847a;
+  --red-brick: #b86a60;
+  --red-dark: #8a4f47;
+  
+  --gold-soft: #d4b896;
+  --gold-warm: #c4a47e;
+  --gold-deep: #a8855e;
 }
 
 * {
