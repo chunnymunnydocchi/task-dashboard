@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useCalendar } from '../../hooks/useCalendar';
+import { useTasks } from '../../hooks/useTasks';
 import CalendarHeader from './CalendarHeader';
 import CalendarGrid from './CalendarGrid';
+import MonthPicker from './MonthPicker';
 import './Calendar.css';
 
 const Calendar = () => {
   const calendar = useCalendar();
+  const { hasTasks } = useTasks(); // ← DESTRUCTURE this way!
   
   // Track animation direction for smooth transitions
   const [animationDirection, setAnimationDirection] = useState('');
@@ -14,7 +17,6 @@ const Calendar = () => {
   const handlePrevMonth = () => {
     setAnimationDirection('slide-right');
     calendar.prevMonth();
-    // Reset animation after it completes
     setTimeout(() => setAnimationDirection(''), 300);
   };
 
@@ -49,8 +51,21 @@ const Calendar = () => {
           isCurrentMonth={calendar.isCurrentMonth}
           isToday={calendar.isToday}
           onSelectDate={calendar.setSelectedDate}
+          hasTasks={hasTasks} // ← Pass the function
         />
       </div>
+
+      {/* Month Picker - MODAL OVERLAY */}
+      {calendar.showMonthPicker && (
+        <MonthPicker
+          currentMonth={calendar.currentMonth}
+          currentYear={parseInt(calendar.currentYear)}
+          onConfirm={(month, year) => {
+            calendar.setMonthAndYear(month, year);
+          }}
+          onCancel={calendar.closeMonthPicker}
+        />
+      )}
     </div>
   );
 };

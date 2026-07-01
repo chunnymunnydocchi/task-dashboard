@@ -6,10 +6,19 @@ const CalendarGrid = ({
   isSelectedDate, 
   isCurrentMonth, 
   isToday, 
-  onSelectDate 
+  onSelectDate,
+  hasTasks
 }) => {
   // Days of the week headers
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // SAFETY: Ensure hasTasks is a function
+  const safeHasTasks = (date) => {
+    if (typeof hasTasks === 'function') {
+      return hasTasks(date);
+    }
+    return false; // Return false if hasTasks is not a function
+  };
 
   return (
     <div className="calendar-grid">
@@ -35,6 +44,9 @@ const CalendarGrid = ({
           if (isSelectedDate(day)) dayClasses += ' selected';
           if (isToday(day)) dayClasses += ' today';
           if (!isCurrentMonth(day)) dayClasses += ' other-month';
+          
+          // Check if this date has tasks - using safe function
+          const hasTask = safeHasTasks(day);
 
           return (
             <div 
@@ -43,6 +55,8 @@ const CalendarGrid = ({
               onClick={() => onSelectDate(day)}
             >
               <span className="day-number">{day.getDate()}</span>
+              {/* Task indicator dot */}
+              {hasTask && <span className="task-dot"></span>}
             </div>
           );
         })}

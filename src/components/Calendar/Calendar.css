@@ -177,6 +177,7 @@
 
 /* Calendar Day - White boxes! */
 .calendar-day {
+  position: relative;
   aspect-ratio: 1;
   display: flex;
   align-items: center;
@@ -189,6 +190,12 @@
   box-shadow: 0 1px 4px rgba(23, 24, 23, 0.04);
 }
 
+.calendar-day:hover {
+  background: #ede7dd;
+  transform: translateY(-2px);
+  border: 1px solid #d4b896;
+}
+
 .calendar-day.empty {
   cursor: default;
   background: transparent;
@@ -196,8 +203,10 @@
 }
 
 .calendar-day:not(.empty):hover {
-  box-shadow: 0 4px 16px rgba(23, 24, 23, 0.1);
-  transform: translateY(-2px);
+  background: #f5f0e8;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(196, 164, 126, 0.25);
+  border: 1px solid #d4b896;
 }
 
 .calendar-day .day-number {
@@ -233,6 +242,40 @@
 
 .calendar-day.selected.today .day-number {
   color: white;
+}
+
+.task-dot {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c4a47e;
+  pointer-events: none;
+}
+
+/* Task dot variations */
+.calendar-day.selected .task-dot {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.calendar-day.today .task-dot {
+  background: #4a8c72;
+}
+
+.calendar-day.selected.today .task-dot {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* Make dot bigger on mobile for visibility */
+@media (max-width: 480px) {
+  .task-dot {
+    width: 8px;
+    height: 8px;
+    bottom: 3px;
+  }
 }
 
 /* Mobile */

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { 
-  format, 
-  addMonths, 
-  subMonths, 
-  startOfMonth, 
-  endOfMonth, 
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
   eachDayOfInterval,
   getDay,
   isSameMonth,
@@ -30,7 +30,7 @@ export const useCalendar = (initialDate = new Date()) => {
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
-  
+
   const goToToday = () => {
     const today = new Date();
     setCurrentDate(today);
@@ -39,6 +39,28 @@ export const useCalendar = (initialDate = new Date()) => {
 
   const openMonthPicker = () => setShowMonthPicker(true);
   const closeMonthPicker = () => setShowMonthPicker(false);
+
+  // Add after the closeMonthPicker function
+  const setMonthAndYear = (month, year) => {
+    // Find the month index (0-11)
+    const monthIndex = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ].indexOf(month);
+
+    if (monthIndex === -1) return; // Invalid month
+
+    // Create new date with selected month and year
+    const newDate = new Date(year, monthIndex, 1);
+    setCurrentDate(newDate);
+    closeMonthPicker();
+  };
+
+  // Also add month names array for the picker
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
 
   const isSelectedDate = (date) => {
     if (!date || !selectedDate) return false;
@@ -67,6 +89,8 @@ export const useCalendar = (initialDate = new Date()) => {
     goToToday,
     openMonthPicker,
     closeMonthPicker,
+    monthNames,
+    setMonthAndYear,
     setSelectedDate,
     isSelectedDate,
     isCurrentMonth,
