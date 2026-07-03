@@ -1,23 +1,40 @@
 import React from 'react';
 
-const CalendarGrid = ({ 
-  days, 
-  selectedDate, 
-  isSelectedDate, 
-  isCurrentMonth, 
-  isToday, 
+const CalendarGrid = ({
+  days,
+  selectedDate,
+  isSelectedDate,
+  isCurrentMonth,
+  isToday,
   onSelectDate,
+  onDateClick,
+  getTaskCount,
+  getCompletedCount,
   hasTasks
 }) => {
   // Days of the week headers
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  // SAFETY: Ensure hasTasks is a function
-  const safeHasTasks = (date) => {
-    if (typeof hasTasks === 'function') {
-      return hasTasks(date);
+  const handleDayClick = (date) => {
+    if (onDateClick) {
+      onDateClick(date);
     }
-    return false; // Return false if hasTasks is not a function
+  };
+
+  // Helper to get task count safely
+  const safeGetTaskCount = (date) => {
+    if (typeof getTaskCount === 'function') {
+      return getTaskCount(date);
+    }
+    return 0;
+  };
+
+  // Helper to get completed count safely
+  const safeGetCompletedCount = (date) => {
+    if (typeof getCompletedCount === 'function') {
+      return getCompletedCount(date);
+    }
+    return 0;
   };
 
   return (
@@ -44,19 +61,39 @@ const CalendarGrid = ({
           if (isSelectedDate(day)) dayClasses += ' selected';
           if (isToday(day)) dayClasses += ' today';
           if (!isCurrentMonth(day)) dayClasses += ' other-month';
-          
-          // Check if this date has tasks - using safe function
-          const hasTask = safeHasTasks(day);
+
+          // Get task counts for this date
+          const totalTasks = safeGetTaskCount(day);
+          const completedCount = safeGetCompletedCount(day);
+          const remainingTasks = totalTasks - completedCount; // ← Calculate remaining
+          const hasTasks = totalTasks > 0;
 
           return (
-            <div 
+            <div
               key={index}
               className={dayClasses}
-              onClick={() => onSelectDate(day)}
+              onClick={() => {
+                onSelectDate(day);
+                handleDayClick(day);
+              }}
             >
               <span className="day-number">{day.getDate()}</span>
-              {/* Task indicator dot */}
-              {hasTask && <span className="task-dot"></span>}
+              
+              {/* Task indicator - show remaining tasks and completed tasks */}
+              {hasTasks && (
+                <div className="task-indicator">
+                  {/* Show remaining tasks count (incomplete) */}
+                  <span className="task-count-badge">
+                    {remainingTasks}
+                  </span>
+                  {/* Show completed tasks count if any */}
+                  {completedCount > 0 && (
+                    <span className="task-completed-badge">
+                      ✓{completedCount}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}

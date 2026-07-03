@@ -1,0 +1,409 @@
+/* Task List Container */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Task List Header */
+.task-list-header {
+  font-size: 13px;
+  color: #8a7e6e;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0d6c8;
+}
+
+/* Empty State */
+.task-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #8a7e6e;
+  text-align: center;
+}
+
+.task-list-empty p {
+  margin: 4px 0;
+}
+
+.task-list-empty .empty-subtitle {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+/* Task Items Container */
+.task-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Individual Task Item */
+.task-item {
+  background: white;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 4px rgba(23, 24, 23, 0.04);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.task-item:hover {
+  box-shadow: 0 4px 12px rgba(23, 24, 23, 0.08);
+  z-index: 2;
+}
+
+.task-item:has(.task-dropdown) {
+  z-index: 50;
+  box-shadow: 0 4px 16px rgba(23, 24, 23, 0.12);
+}
+
+.task-item.completed {
+  opacity: 0.6;
+}
+
+.task-item.completed .task-title {
+  text-decoration: line-through;
+  color: #b5aa9a;
+}
+
+/* Toggle Button */
+.task-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.task-toggle:hover {
+  transform: scale(1.1);
+}
+
+/* Task Content */
+.task-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-title {
+  font-size: 14px;
+  color: #171817;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+/* Priority Dot */
+.priority-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.priority-high {
+  background: #d4847a;
+}
+
+.priority-normal {
+  background: #c4a47e;
+}
+
+.priority-low {
+  background: #7cb8a0;
+}
+
+/* Task Time */
+.task-time {
+  font-size: 12px;
+  color: #8a7e6e;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-icon {
+  font-size: 12px;
+}
+
+/* Three-Dot Menu */
+.task-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.task-menu-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #b5aa9a;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.task-menu-btn:hover {
+  background: #f5f0e8;
+  color: #171817;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .task-item {
+    padding: 10px 14px;
+  }
+
+  .task-title {
+    font-size: 13px;
+  }
+
+  .task-menu-btn {
+    font-size: 16px;
+  }
+}
+
+.task-dropdown .dropdown-item .material-icons {
+  font-size: 18px;
+  margin-right: 8px;
+}
+
+.task-menu-btn .material-icons {
+  font-size: 20px;
+}
+
+.task-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(23, 24, 23, 0.12);
+  min-width: 120px;
+  z-index: 100;
+  overflow: hidden;
+  border: 1px solid #e0d6c8;
+}
+
+.task-dropdown .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 14px;
+  color: #171817;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.task-dropdown .dropdown-item:hover {
+  background: #f5f0e8;
+}
+
+.task-dropdown .dropdown-item.edit:hover {
+  background: #f0ece6;
+}
+
+.task-dropdown .dropdown-item.delete {
+  color: #d4847a;
+}
+
+.task-dropdown .dropdown-item.delete:hover {
+  background: #fdf0ed;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .task-dropdown {
+    min-width: 100px;
+    right: -8px;
+  }
+  
+  .task-dropdown .dropdown-item {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}
+
+/* Filter & Sort Controls */
+.task-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 0 16px 0;
+  border-bottom: 1px solid #e0d6c8;
+  margin-bottom: 16px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #8a7e6e;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: #c4a47e;
+  padding: 4px;
+  border-radius: 24px;
+  position: relative;
+}
+
+/* Capsule Toggle Button */
+.filter-btn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 20px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  text-align: center;
+  min-width: 40px;
+  letter-spacing: 0.3px;
+}
+
+.filter-btn:hover {
+  color: #171817;
+  transform: translateY(-1px);
+}
+
+.filter-btn.active {
+  background: white;
+  color: #171817;
+  box-shadow: 0 2px 8px rgba(23, 24, 23, 0.12);
+  transform: scale(1.02);
+}
+
+.filter-btn.active:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 12px rgba(23, 24, 23, 0.15);
+}
+
+/* Smooth active indicator - optional background highlight */
+.filter-buttons {
+  position: relative;
+}
+
+/* Add a subtle slide effect for the active state */
+.filter-btn {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Filter group spacing */
+.filter-group:not(:last-child) {
+  margin-bottom: 2px;
+}
+
+/* Task List Header */
+.task-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #8a7e6e;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0d6c8;
+  margin-bottom: 12px;
+}
+
+.task-count {
+  font-weight: 500;
+  color: #171817;
+}
+
+.filtered-count {
+  font-size: 12px;
+  background: #f5f0e8;
+  padding: 2px 10px;
+  border-radius: 12px;
+  color: #8a7e6e;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .task-filters {
+    gap: 10px;
+    padding: 0 0 12px 0;
+  }
+
+  .filter-buttons {
+    gap: 4px;
+    padding: 3px;
+    border-radius: 20px;
+  }
+
+  .filter-btn {
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 18px;
+    min-width: 32px;
+  }
+
+  .filter-label {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-filters {
+    gap: 8px;
+  }
+
+  .filter-buttons {
+    gap: 3px;
+    padding: 3px;
+    border-radius: 16px;
+  }
+
+  .filter-btn {
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 14px;
+    min-width: 28px;
+  }
+
+  .task-list-header {
+    font-size: 12px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+}

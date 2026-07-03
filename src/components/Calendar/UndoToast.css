@@ -1,0 +1,160 @@
+/* Undo Toast Container */
+.undo-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #171817;
+  color: white;
+  border-radius: 12px;
+  padding: 14px 20px;
+  min-width: 300px;
+  max-width: 500px;
+  box-shadow: 0 8px 32px rgba(23, 24, 23, 0.4);
+  z-index: 9999; /* Very high z-index to be above everything */
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+  pointer-events: auto; 
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateX(-50%) translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Toast Content */
+.undo-toast-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  pointer-events: auto;
+  z-index: 10000;
+}
+
+.undo-toast-undo-btn,
+.undo-toast-close-btn {
+  pointer-events: auto;
+  cursor: pointer;
+  position: relative;
+  z-index: 10000;
+}
+
+.undo-toast-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  flex: 1;
+}
+
+.undo-toast-icon {
+  font-size: 18px;
+}
+
+/* Actions */
+.undo-toast-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.undo-toast-undo-btn {
+  background: #c4a47e;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.undo-toast-undo-btn:hover {
+  background: #b5956e;
+  transform: scale(1.02);
+}
+
+.undo-toast-close-btn {
+  background: transparent;
+  border: none;
+  color: #8a7e6e;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.undo-toast-close-btn:hover {
+  color: #d4cec4;
+}
+
+.undo-toast-close-btn .material-icons {
+  font-size: 18px;
+}
+
+/* Progress Bar */
+.undo-toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: #c4a47e;
+  transition: width 0.1s linear;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .undo-toast {
+    bottom: 70px;
+    min-width: 90%;
+    max-width: 90%;
+    padding: 12px 16px;
+    border-radius: 10px;
+  }
+
+  .undo-toast-message {
+    font-size: 13px;
+  }
+
+  .undo-toast-undo-btn {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+
+  .undo-toast-close-btn .material-icons {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .undo-toast {
+    bottom: 60px;
+    min-width: 95%;
+    max-width: 95%;
+    padding: 10px 14px;
+    border-radius: 8px;
+  }
+
+  .undo-toast-message {
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .undo-toast-undo-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+}

@@ -180,6 +180,7 @@
   position: relative;
   aspect-ratio: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   border-radius: 10px;
@@ -188,6 +189,7 @@
   background: white;
   min-height: 48px;
   box-shadow: 0 1px 4px rgba(23, 24, 23, 0.04);
+  padding: 4px 0;
 }
 
 .calendar-day:hover {
@@ -212,6 +214,7 @@
 .calendar-day .day-number {
   font-size: 0.9rem;
   color: #171817;
+  font-weight: 500;
 }
 
 .calendar-day.other-month .day-number {
@@ -244,6 +247,97 @@
   color: white;
 }
 
+/* ============================================ */
+/* NEW: TASK INDICATOR STYLES */
+/* ============================================ */
+
+/* Task indicator container */
+.task-indicator {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+/* Task count badge - shows total tasks */
+.task-count-badge {
+  background: #c4a47e;
+  color: white;
+  font-size: 8px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 8px;
+  min-width: 14px;
+  text-align: center;
+  line-height: 14px;
+  transition: all 0.2s ease;
+}
+
+/* Completed count badge - shows completed tasks */
+.task-completed-badge {
+  background: #7cb8a0;
+  color: white;
+  font-size: 7px;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 8px;
+  min-width: 12px;
+  text-align: center;
+  line-height: 12px;
+  transition: all 0.2s ease;
+}
+
+/* Selected day - darker badges */
+.calendar-day.selected .task-count-badge {
+  background: #b5956e;
+}
+
+.calendar-day.selected .task-completed-badge {
+  background: #5da88a;
+}
+
+/* Today - green badges */
+.calendar-day.today .task-count-badge {
+  background: #4a8c72;
+}
+
+.calendar-day.today .task-completed-badge {
+  background: #2d5d4b;
+}
+
+.calendar-day.selected.today .task-count-badge {
+  background: #2d5d4b;
+}
+
+.calendar-day.selected.today .task-completed-badge {
+  background: #1a3d2f;
+}
+
+/* Other month - gray badges */
+.calendar-day.other-month .task-count-badge {
+  background: #d4cec4;
+}
+
+.calendar-day.other-month .task-completed-badge {
+  background: #bfd4c9;
+}
+
+/* Hover effects on badges */
+.calendar-day:hover .task-count-badge {
+  transform: scale(1.05);
+}
+
+.calendar-day:hover .task-completed-badge {
+  transform: scale(1.05);
+}
+
+/* ============================================ */
+/* OLD: Task Dot (keep for backward compatibility) */
+/* ============================================ */
+
 .task-dot {
   position: absolute;
   bottom: 4px;
@@ -269,16 +363,10 @@
   background: rgba(255, 255, 255, 0.8);
 }
 
-/* Make dot bigger on mobile for visibility */
-@media (max-width: 480px) {
-  .task-dot {
-    width: 8px;
-    height: 8px;
-    bottom: 3px;
-  }
-}
+/* ============================================ */
+/* MOBILE RESPONSIVE */
+/* ============================================ */
 
-/* Mobile */
 @media (max-width: 768px) {
   .calendar-header {
     padding: 16px 16px 12px 16px;
@@ -287,10 +375,22 @@
   .calendar-nav-left { left: 12px; }
   .calendar-nav-right { right: 12px; }
   
-  .calendar-day { min-height: 40px; }
-  .calendar-day .day-number { font-size: 0.8rem; }
-  .calendar-title h2 { font-size: 1.1rem; }
-  .calendar-grid-wrapper { padding: 16px; }
+  .calendar-day { 
+    min-height: 40px; 
+    padding: 2px 0;
+  }
+  
+  .calendar-day .day-number { 
+    font-size: 0.8rem; 
+  }
+  
+  .calendar-title h2 { 
+    font-size: 1.1rem; 
+  }
+  
+  .calendar-grid-wrapper { 
+    padding: 16px; 
+  }
   
   .today-btn-bookmark {
     right: 10%;
@@ -299,19 +399,68 @@
     border-radius: 12px;
   }
   
-  .nav-btn { width: 32px; height: 32px; }
-  .nav-btn .material-icons { font-size: 18px; }
+  .nav-btn { 
+    width: 32px; 
+    height: 32px; 
+  }
+  
+  .nav-btn .material-icons { 
+    font-size: 18px; 
+  }
+
+  /* Smaller badges on tablet */
+  .task-count-badge {
+    font-size: 7px;
+    padding: 0 4px;
+    min-width: 12px;
+    line-height: 12px;
+  }
+
+  .task-completed-badge {
+    font-size: 6px;
+    padding: 0 3px;
+    min-width: 10px;
+    line-height: 10px;
+  }
+
+  .task-indicator {
+    top: 3px;
+    right: 3px;
+    gap: 2px;
+  }
 }
 
 @media (max-width: 480px) {
-  .calendar-header { padding: 12px; }
-  .calendar-nav-left { left: 8px; }
-  .calendar-nav-right { right: 8px; gap: 4px; }
+  .calendar-header { 
+    padding: 12px; 
+  }
   
-  .calendar-day { min-height: 36px; border-radius: 6px; }
-  .calendar-day .day-number { font-size: 0.75rem; }
-  .calendar-title h2 { font-size: 0.95rem; }
-  .calendar-grid-wrapper { padding: 12px; }
+  .calendar-nav-left { 
+    left: 8px; 
+  }
+  
+  .calendar-nav-right { 
+    right: 8px; 
+    gap: 4px; 
+  }
+  
+  .calendar-day { 
+    min-height: 36px; 
+    border-radius: 6px;
+    padding: 1px 0;
+  }
+  
+  .calendar-day .day-number { 
+    font-size: 0.75rem; 
+  }
+  
+  .calendar-title h2 { 
+    font-size: 0.95rem; 
+  }
+  
+  .calendar-grid-wrapper { 
+    padding: 12px; 
+  }
   
   .today-btn-bookmark {
     right: 15%;
@@ -320,6 +469,41 @@
     border-radius: 10px;
   }
   
-  .nav-btn { width: 28px; height: 28px; }
-  .nav-btn .material-icons { font-size: 16px; }
+  .nav-btn { 
+    width: 28px; 
+    height: 28px; 
+  }
+  
+  .nav-btn .material-icons { 
+    font-size: 16px; 
+  }
+
+  /* Even smaller badges on mobile */
+  .task-indicator {
+    top: 2px;
+    right: 2px;
+    gap: 1px;
+  }
+
+  .task-count-badge {
+    font-size: 6px;
+    padding: 0 3px;
+    min-width: 10px;
+    line-height: 10px;
+    border-radius: 6px;
+  }
+
+  .task-completed-badge {
+    font-size: 5px;
+    padding: 0 2px;
+    min-width: 8px;
+    line-height: 8px;
+    border-radius: 6px;
+  }
+  /* Make dot bigger on mobile for visibility */
+  .task-dot {
+    width: 8px;
+    height: 8px;
+    bottom: 3px;
+  }
 }
