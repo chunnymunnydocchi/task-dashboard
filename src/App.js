@@ -6,7 +6,7 @@ import './App.css';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/task-dashboard">
       <div className="app">
         <Sidebar />
         <div className="main-content">

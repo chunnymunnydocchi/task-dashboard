@@ -1,11 +1,23 @@
 /* src/pages/TasksPage.css */
 .tasks-page {
-  width: 100%;
+  min-height: 100vh;
+  background: var(--warm-cream, #f5f0e8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .page-container {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 2px 8px rgba(23, 24, 23, 0.08);
+  max-width: 800px;
+  width: 100%;
+  padding: 40px 24px;
+}
+
+.page-container h1 {
+  color: var(--cynical-black, #171817);
+  margin-bottom: 8px;
+}
+
+.page-container p {
+  color: var(--grey, #807e80);
 }

@@ -1,3 +1,4 @@
+// src/components/Calendar/SidePanel.jsx
 import React, { useEffect, useRef } from 'react';
 import './SidePanel.css';
 

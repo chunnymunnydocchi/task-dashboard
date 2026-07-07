@@ -8,7 +8,7 @@ import {
 export const useTasks = () => {
   const [tasks, setTasks] = useState({});
   const [loading, setLoading] = useState(true);
-  
+
   // Track the last deleted task for undo
   const [lastDeletedTask, setLastDeletedTask] = useState(null);
   const [lastDeletedDateKey, setLastDeletedDateKey] = useState(null);
@@ -48,8 +48,7 @@ export const useTasks = () => {
   // Add a task (now handles full task objects)
   const addTask = (date, taskData) => {
     if (!date) return false;
-    
-    // If taskData is a string, convert to full task object
+
     let task;
     if (typeof taskData === 'string') {
       task = {
@@ -63,7 +62,6 @@ export const useTasks = () => {
         updatedAt: new Date().toISOString()
       };
     } else {
-      // It's already a task object
       task = {
         ...taskData,
         id: taskData.id || `task_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
@@ -76,14 +74,42 @@ export const useTasks = () => {
     const dateKey = formatDateKey(date);
     const updatedTasks = { ...tasks };
 
-    if (!updatedTasks[dateKey]) {
-      updatedTasks[dateKey] = [];
-    }
+    const existingTasks = updatedTasks[dateKey] || [];
+    updatedTasks[dateKey] = [...existingTasks, task];
 
-    updatedTasks[dateKey].push(task);
     setTasks(updatedTasks);
     saveTasks(updatedTasks);
     return true;
+  };
+
+  // Update a task by ID
+  const updateTask = (date, taskId, updates) => {
+    const dateKey = formatDateKey(date);
+    const updatedTasks = { ...tasks };
+
+    if (updatedTasks[dateKey]) {
+      const taskIndex = updatedTasks[dateKey].findIndex(task => task.id === taskId);
+      if (taskIndex !== -1) {
+        // Create updated task with new data
+        const updatedTask = {
+          ...updatedTasks[dateKey][taskIndex],
+          ...updates,
+          updatedAt: new Date().toISOString()
+        };
+
+        // Create new array with the updated task
+        updatedTasks[dateKey] = [
+          ...updatedTasks[dateKey].slice(0, taskIndex),
+          updatedTask,
+          ...updatedTasks[dateKey].slice(taskIndex + 1)
+        ];
+
+        setTasks(updatedTasks);
+        saveTasks(updatedTasks);
+        return true;
+      }
+    }
+    return false;
   };
 
   // Remove a task by ID - with undo tracking
@@ -92,16 +118,14 @@ export const useTasks = () => {
     const updatedTasks = { ...tasks };
 
     if (updatedTasks[dateKey]) {
-      // Find the task to delete
       const taskIndex = updatedTasks[dateKey].findIndex(task => task.id === taskId);
       if (taskIndex !== -1) {
-        // Store the deleted task for undo
         const deletedTask = updatedTasks[dateKey][taskIndex];
         setLastDeletedTask(deletedTask);
         setLastDeletedDateKey(dateKey);
 
-        // Remove the task
-        updatedTasks[dateKey].splice(taskIndex, 1);
+        // 🔥 FIX: Create a new array without the task
+        updatedTasks[dateKey] = updatedTasks[dateKey].filter(task => task.id !== taskId);
 
         if (updatedTasks[dateKey].length === 0) {
           delete updatedTasks[dateKey];
@@ -120,15 +144,14 @@ export const useTasks = () => {
     if (!lastDeletedTask || !lastDeletedDateKey) return false;
 
     const updatedTasks = { ...tasks };
-    if (!updatedTasks[lastDeletedDateKey]) {
-      updatedTasks[lastDeletedDateKey] = [];
-    }
-    updatedTasks[lastDeletedDateKey].push(lastDeletedTask);
-    
+
+    // 🔥 FIX: Create a new array
+    const existingTasks = updatedTasks[lastDeletedDateKey] || [];
+    updatedTasks[lastDeletedDateKey] = [...existingTasks, lastDeletedTask];
+
     setTasks(updatedTasks);
     saveTasks(updatedTasks);
-    
-    // Clear the deleted task
+
     setLastDeletedTask(null);
     setLastDeletedDateKey(null);
     return true;
@@ -167,8 +190,20 @@ export const useTasks = () => {
     if (updatedTasks[dateKey]) {
       const taskIndex = updatedTasks[dateKey].findIndex(task => task.id === taskId);
       if (taskIndex !== -1) {
-        updatedTasks[dateKey][taskIndex].completed = !updatedTasks[dateKey][taskIndex].completed;
-        updatedTasks[dateKey][taskIndex].updatedAt = new Date().toISOString();
+        // 🔥 FIX: Create a new array with the updated task
+        const task = updatedTasks[dateKey][taskIndex];
+        const updatedTask = {
+          ...task,
+          completed: !task.completed,
+          updatedAt: new Date().toISOString()
+        };
+
+        updatedTasks[dateKey] = [
+          ...updatedTasks[dateKey].slice(0, taskIndex),
+          updatedTask,
+          ...updatedTasks[dateKey].slice(taskIndex + 1)
+        ];
+
         setTasks(updatedTasks);
         saveTasks(updatedTasks);
         return true;
@@ -184,6 +219,7 @@ export const useTasks = () => {
     getTaskCount,
     getCompletedCount,
     addTask,
+    updateTask,
     removeTask,
     removeTaskById,
     toggleTask,

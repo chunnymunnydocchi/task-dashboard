@@ -1,9 +1,14 @@
-// src/components/Sidebar/Sidebar.jsx
-import { NavLink } from 'react-router-dom';
-import logo from '../../logo.svg'; // Adjust path as needed
+import { NavLink, useNavigate } from 'react-router-dom';
+import logo from '../../logo.svg';
 import './Sidebar.css';
 
 function Sidebar() {
+  const navigate = useNavigate();
+
+  const handleAddTask = () => {
+    navigate('/tasks', { state: { mode: 'manual' } });
+  };
+
   return (
     <nav className="sidebar">
       <div className="sidebar-logo">
@@ -35,6 +40,11 @@ function Sidebar() {
           </NavLink>
         </li>
       </ul>
+      <div className="sidebar-divider"></div>
+      <button className="sidebar-add-task" onClick={handleAddTask}>
+        <span className="material-icons nav-icon add-icon">add_circle</span>
+        <span className="nav-text">Add Task</span>
+      </button>
     </nav>
   );
 }

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Task Dashboard</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var search = window.location.search;
+        
+        // Remove the base path if it exists
+        var basePath = '/task-dashboard';
+        var cleanPath = path.startsWith(basePath) ? path.substring(basePath.length) : path;
+        
+        // Redirect to index.html with the path as a query parameter
+        window.location.href = basePath + '/?path=' + encodeURIComponent(cleanPath + search);
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Redirecting to the Task Dashboard...</p>
+  </body>
+</html>

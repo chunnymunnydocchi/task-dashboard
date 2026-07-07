@@ -53,7 +53,10 @@ const Calendar = () => {
 
   // Get tasks for the selected date
   const selectedDateKey = getDateKey(selectedDate);
-  const tasksForSelectedDate = selectedDateKey ? getTasksForDate(selectedDateKey) : [];
+  const tasksForSelectedDate = React.useMemo(() => {
+    if (!selectedDateKey) return [];
+    return tasks[selectedDateKey] || [];
+  }, [selectedDateKey, tasks]);
 
   const remainingTasks = tasksForSelectedDate.filter(task => !task.completed).length;
   const completedTasks = tasksForSelectedDate.filter(task => task.completed).length;
@@ -211,7 +214,7 @@ const Calendar = () => {
               onToggleTask={handleToggleTask}
               onDeleteTask={handleDeleteTask}
               onEditTask={handleEditTask}
-              deletedTaskId={showUndoToast && lastDeletedTask ? lastDeletedTask.id : null} 
+              deletedTaskId={showUndoToast && lastDeletedTask ? lastDeletedTask.id : null}
             />
           </SidePanel>
 
