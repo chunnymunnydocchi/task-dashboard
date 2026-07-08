@@ -6,6 +6,9 @@
   box-shadow: 0 4px 20px rgba(23, 24, 23, 0.08);
   position: relative;
   overflow: visible;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Calendar Header */
@@ -18,6 +21,8 @@
   border-bottom: 1px solid #e0d6c8;
   position: relative;
   border-radius: 16px 16px 0 0;
+  flex-shrink: 0;
+  overflow: visible;
 }
 
 /* Today Button - BOOKMARK */
@@ -38,6 +43,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
 }
 
 .today-btn-bookmark:hover {
@@ -125,7 +131,9 @@
   padding: 20px 24px 24px 24px;
   background: #ede7dd;
   border-radius: 0 0 16px 16px;
-  overflow: hidden;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .calendar-grid-wrapper.slide-left {
@@ -137,13 +145,27 @@
 }
 
 @keyframes slideLeft {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes slideRight {
-  from { opacity: 0; transform: translateX(-20px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Calendar Grid */
@@ -157,6 +179,7 @@
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
   margin-bottom: 8px;
+  width: 100%;
 }
 
 .weekday {
@@ -167,12 +190,17 @@
   padding: 8px 0;
   text-transform: uppercase;
   letter-spacing: 0.8px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
+  width: 100%;
 }
 
 /* Calendar Day - White boxes! */
@@ -188,8 +216,10 @@
   transition: all 0.2s ease;
   background: white;
   min-height: 48px;
+  min-width: 0;
   box-shadow: 0 1px 4px rgba(23, 24, 23, 0.04);
-  padding: 4px 0;
+  padding: 4px 2px;
+  width: 100%;
 }
 
 .calendar-day:hover {
@@ -363,49 +393,117 @@
   background: rgba(255, 255, 255, 0.8);
 }
 
+/* Quick Add Modal Overlay */
+.quick-add-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Quick mode - borderless modal */
+.task-form-container.quick-mode {
+  border: none;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  background: #1a1a1a;
+  max-width: 480px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.task-form-modal {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ============================================ */
 /* MOBILE RESPONSIVE */
 /* ============================================ */
 
 @media (max-width: 768px) {
+  .calendar-container {
+    border-radius: 12px;
+    height: 100%;
+  }
+
   .calendar-header {
     padding: 16px 16px 12px 16px;
   }
-  
-  .calendar-nav-left { left: 12px; }
-  .calendar-nav-right { right: 12px; }
-  
-  .calendar-day { 
-    min-height: 40px; 
+
+  .calendar-nav-left {
+    left: 12px;
+  }
+
+  .calendar-nav-right {
+    right: 12px;
+  }
+
+  .calendar-day {
+    min-height: 40px;
     padding: 2px 0;
   }
-  
-  .calendar-day .day-number { 
-    font-size: 0.8rem; 
+
+  .calendar-day .day-number {
+    font-size: 0.8rem;
   }
-  
-  .calendar-title h2 { 
-    font-size: 1.1rem; 
+
+  .calendar-title h2 {
+    font-size: 1.1rem;
   }
-  
-  .calendar-grid-wrapper { 
-    padding: 16px; 
+
+  .calendar-grid-wrapper {
+    padding: 16px;
   }
-  
+
   .today-btn-bookmark {
     right: 10%;
     padding: 8px;
     font-size: 0.7rem;
     border-radius: 12px;
   }
-  
-  .nav-btn { 
-    width: 32px; 
-    height: 32px; 
+
+  .nav-btn {
+    width: 32px;
+    height: 32px;
   }
-  
-  .nav-btn .material-icons { 
-    font-size: 18px; 
+
+  .nav-btn .material-icons {
+    font-size: 18px;
   }
 
   /* Smaller badges on tablet */
@@ -431,51 +529,51 @@
 }
 
 @media (max-width: 480px) {
-  .calendar-header { 
-    padding: 12px; 
+  .calendar-header {
+    padding: 12px;
   }
-  
-  .calendar-nav-left { 
-    left: 8px; 
+
+  .calendar-nav-left {
+    left: 8px;
   }
-  
-  .calendar-nav-right { 
-    right: 8px; 
-    gap: 4px; 
+
+  .calendar-nav-right {
+    right: 8px;
+    gap: 4px;
   }
-  
-  .calendar-day { 
-    min-height: 36px; 
+
+  .calendar-day {
+    min-height: 36px;
     border-radius: 6px;
     padding: 1px 0;
   }
-  
-  .calendar-day .day-number { 
-    font-size: 0.75rem; 
+
+  .calendar-day .day-number {
+    font-size: 0.75rem;
   }
-  
-  .calendar-title h2 { 
-    font-size: 0.95rem; 
+
+  .calendar-title h2 {
+    font-size: 0.95rem;
   }
-  
-  .calendar-grid-wrapper { 
-    padding: 12px; 
+
+  .calendar-grid-wrapper {
+    padding: 12px;
   }
-  
+
   .today-btn-bookmark {
     right: 15%;
     padding: 6px;
     font-size: 0.6rem;
     border-radius: 10px;
   }
-  
-  .nav-btn { 
-    width: 28px; 
-    height: 28px; 
+
+  .nav-btn {
+    width: 28px;
+    height: 28px;
   }
-  
-  .nav-btn .material-icons { 
-    font-size: 16px; 
+
+  .nav-btn .material-icons {
+    font-size: 16px;
   }
 
   /* Even smaller badges on mobile */
@@ -500,10 +598,18 @@
     line-height: 8px;
     border-radius: 6px;
   }
+
   /* Make dot bigger on mobile for visibility */
   .task-dot {
     width: 8px;
     height: 8px;
     bottom: 3px;
+  }
+}
+
+@media (max-width: 768px) {
+  .task-form-container.quick-mode {
+    max-width: 95%;
+    border-radius: 12px;
   }
 }

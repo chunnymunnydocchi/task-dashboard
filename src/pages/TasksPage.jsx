@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTasks } from '../hooks/useTasks';
 import TaskForm from '../components/TaskForm/TaskForm';
+import SuccessToast from '../components/Calendar/SuccessToast';
 import './TasksPage.css';
 
 function TasksPage() {
@@ -10,23 +11,31 @@ function TasksPage() {
   const navigate = useNavigate();
   const { addTask } = useTasks();
   
+  // Add toast state
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successToastMessage, setSuccessToastMessage] = useState('');
+  
   // Get mode from navigation state
-  const mode = location.state?.mode || 'list'; // 'manual' | 'edit' | 'list'
+  const mode = location.state?.mode || 'list';
   const taskId = location.state?.taskId || null;
   const date = location.state?.date || null;
 
-  // For edit mode, we'll fetch task data later
   const [initialData, setInitialData] = useState(null);
 
-  // For now, just handle manual mode
+  // Handle save with toast
   const handleSave = (taskData) => {
-    // For manual mode, taskData includes the date field
     const dateObj = new Date(taskData.date);
     const success = addTask(dateObj, taskData);
     
     if (success) {
-      // Navigate back to calendar or tasks list
-      navigate('/');
+      // Show success toast
+      setSuccessToastMessage(`Task Added: "${taskData.title}"`);
+      setShowSuccessToast(true);
+      
+      // Navigate back after a brief delay
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
     }
   };
 
@@ -44,6 +53,15 @@ function TasksPage() {
           onCancel={handleCancel}
           onClose={handleCancel}
         />
+        
+        {/* Success Toast */}
+        {showSuccessToast && (
+          <SuccessToast
+            message={successToastMessage}
+            onDismiss={() => setShowSuccessToast(false)}
+            duration={3000}
+          />
+        )}
       </div>
     );
   }

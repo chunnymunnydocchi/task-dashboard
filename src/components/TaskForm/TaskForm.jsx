@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import './TaskForm.css';
 
-const TaskForm = ({ 
+const TaskForm = ({
   mode,        // 'quick' | 'manual' | 'edit'
   initialData, // For edit mode
   selectedDate, // For quick mode (the date from calendar)
@@ -45,11 +45,22 @@ const TaskForm = ({
       if (initialData.timeSchedule?.end) {
         setShowEndTime(true);
       }
-    } else if (mode === 'quick' && selectedDate) {
-      setFormData(prev => ({
-        ...prev,
-        date: format(selectedDate, 'yyyy-MM-dd')
-      }));
+    } else if (mode === 'quick' && initialData) {
+      // ✅ NEW: Quick mode with pre-filled data
+      setFormData({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        priority: initialData.priority || 'normal',
+        completed: initialData.completed || false,
+        timeSchedule: {
+          start: initialData.timeSchedule?.start || '',
+          end: initialData.timeSchedule?.end || ''
+        },
+        date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''
+      });
+      if (initialData.timeSchedule?.end) {
+        setShowEndTime(true);
+      }
     } else if (mode === 'manual') {
       setFormData(prev => ({
         ...prev,
@@ -84,7 +95,7 @@ const TaskForm = ({
       newErrors.title = 'Title is required to save changes';
     }
     setErrors(newErrors);
-    
+
     if (newErrors.title) {
       setShake(true);
       setTimeout(() => setShake(false), 500);
@@ -98,7 +109,7 @@ const TaskForm = ({
 
   const handleSubmit = () => {
     if (!validate()) return;
-    
+
     const taskData = {
       title: formData.title.trim(),
       description: formData.description.trim(),
@@ -123,8 +134,8 @@ const TaskForm = ({
   };
 
   const getSubmitButtonText = () => {
-    if (mode === 'manual') return 'Add Task';
-    return 'Save Changes';
+    if (mode === 'quick' || mode === 'edit') return 'Save Changes';
+    return 'Add Task';
   };
 
   const getCancelButtonText = () => {
@@ -144,6 +155,8 @@ const TaskForm = ({
     }));
   };
 
+  const modalClassName = `task-form-container ${mode === 'quick' ? 'quick-mode' : ''}`;
+  
   return (
     <div className="task-form-modal">
       <div className="task-form-backdrop" onClick={onClose} />
@@ -209,7 +222,7 @@ const TaskForm = ({
                   onChange={(e) => handleTimeChange('start', e.target.value)}
                 />
               </div>
-              
+
               {showEndTime ? (
                 <div className="time-input-row">
                   <span className="time-label">End</span>
@@ -219,7 +232,7 @@ const TaskForm = ({
                     value={formData.timeSchedule.end}
                     onChange={(e) => handleTimeChange('end', e.target.value)}
                   />
-                  <button 
+                  <button
                     className="remove-time-btn"
                     onClick={() => {
                       setShowEndTime(false);
@@ -230,7 +243,7 @@ const TaskForm = ({
                   </button>
                 </div>
               ) : (
-                <button 
+                <button
                   className="add-time-btn"
                   onClick={() => setShowEndTime(true)}
                 >
@@ -269,7 +282,7 @@ const TaskForm = ({
           <div className="form-group">
             <label>Task Status</label>
             <div className="status-toggle-wrapper">
-              <button 
+              <button
                 className={`status-toggle-btn ${formData.completed ? 'completed' : ''}`}
                 onClick={toggleCompleted}
               >

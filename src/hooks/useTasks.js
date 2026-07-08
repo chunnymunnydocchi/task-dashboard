@@ -65,6 +65,7 @@ export const useTasks = () => {
       task = {
         ...taskData,
         id: taskData.id || `task_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        createdAt: taskData.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
     }

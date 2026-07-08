@@ -7,6 +7,8 @@ import MonthPicker from './MonthPicker';
 import SidePanel from './SidePanel';
 import TaskList from './TaskList';
 import UndoToast from './UndoToast';
+import SuccessToast from './SuccessToast';
+import TaskForm from '../TaskForm/TaskForm';
 import './Calendar.css';
 
 const Calendar = () => {
@@ -19,6 +21,7 @@ const Calendar = () => {
     getCompletedCount,
     getTasksForDate,
     addTask,
+    updateTask,
     toggleTask,
     removeTaskById,
     undoLastDeletion,
@@ -29,6 +32,15 @@ const Calendar = () => {
   // Quick add state
   const [quickAddText, setQuickAddText] = useState('');
   const [quickAddError, setQuickAddError] = useState('');
+
+  // Quick Add Modal state
+  const [showQuickAddModal, setShowQuickAddModal] = useState(false);
+  const [quickAddTaskId, setQuickAddTaskId] = useState(null);
+  const [quickAddTitle, setQuickAddTitle] = useState('');
+
+  // Success Toast state
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successToastMessage, setSuccessToastMessage] = useState('');
 
   // Track if undo toast should be shown
   const [showUndoToast, setShowUndoToast] = useState(false);
@@ -75,15 +87,70 @@ const Calendar = () => {
       return;
     }
 
-    const success = addTask(selectedDate, quickAddText.trim());
+    // Generate task ID
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const taskTitle = quickAddText.trim();
+
+    // Create task with just title
+    const taskData = {
+      id: taskId,
+      title: taskTitle,
+      description: '',
+      priority: 'normal',
+      completed: false,
+      timeSchedule: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const success = addTask(selectedDate, taskData);
 
     if (success) {
+      // Store for modal
+      setQuickAddTitle(taskTitle);
+      setQuickAddTaskId(taskId);
       setQuickAddText('');
       setQuickAddError('');
-    } else {
-      setQuickAddError('Failed to add task');
-      setTimeout(() => setQuickAddError(''), 5000);
+
+      // Show success toast
+      setSuccessToastMessage(`Task Added: "${taskTitle}"`);
+      setShowSuccessToast(true);
+
+      // Open modal after toast shows briefly
+      setTimeout(() => {
+        setShowQuickAddModal(true);
+      }, 500);
     }
+  };
+
+  // Handle Quick Add Save (from modal)
+  const handleQuickAddSave = (taskData) => {
+    if (quickAddTaskId && selectedDate) {
+      // Update the existing task with new details
+      updateTask(selectedDate, quickAddTaskId, taskData);
+      setShowQuickAddModal(false);
+      setQuickAddTaskId(null);
+
+      // Show updated toast
+      setSuccessToastMessage(`Task Updated: "${taskData.title}"`);
+      setShowSuccessToast(true);
+      setTimeout(() => {
+        setShowSuccessToast(false);
+      }, 3000);
+    }
+  };
+
+  // Handle Quick Add Modal Close (Edit Later)
+  const handleQuickAddClose = () => {
+    setShowQuickAddModal(false);
+    setQuickAddTaskId(null);
+
+    // Show a toast reminding user they can edit later
+    setSuccessToastMessage(`Task saved! You can edit it later`);
+    setShowSuccessToast(true);
+    setTimeout(() => {
+      setShowSuccessToast(false);
+    }, 3000);
   };
 
   // Handle toggle task
@@ -231,6 +298,35 @@ const Calendar = () => {
           />
         )}
       </div>
+
+      {/* Quick Add Modal */}
+      {showQuickAddModal && (
+        <div className="quick-add-modal-overlay">
+          <TaskForm
+            mode="quick"
+            selectedDate={selectedDate}
+            initialData={{
+              title: quickAddTitle,
+              description: '',
+              priority: 'normal',
+              completed: false,
+              timeSchedule: { start: '', end: '' }
+            }}
+            onSave={handleQuickAddSave}
+            onCancel={handleQuickAddClose}
+            onClose={handleQuickAddClose}
+          />
+        </div>
+      )}
+
+      {/* Success Toast */}
+      {showSuccessToast && (
+        <SuccessToast
+          message={successToastMessage}
+          onDismiss={() => setShowSuccessToast(false)}
+          duration={3000}
+        />
+      )}
 
       {/* Undo Toast - Rendered outside SidePanel */}
       {showUndoToast && lastDeletedTask && (
