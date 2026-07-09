@@ -1,3 +1,4 @@
+// src/hooks/useTasks.js
 import { useState, useEffect } from 'react';
 import {
   getTasks,
@@ -121,19 +122,24 @@ export const useTasks = () => {
     if (updatedTasks[dateKey]) {
       const taskIndex = updatedTasks[dateKey].findIndex(task => task.id === taskId);
       if (taskIndex !== -1) {
-        const deletedTask = updatedTasks[dateKey][taskIndex];
-        setLastDeletedTask(deletedTask);
-        setLastDeletedDateKey(dateKey);
+        // IMPORTANT: Store the task BEFORE modifying
+        const deletedTask = { ...updatedTasks[dateKey][taskIndex] };
+        const deletedDateKey = dateKey;
 
-        // 🔥 FIX: Create a new array without the task
+        // Remove the task
         updatedTasks[dateKey] = updatedTasks[dateKey].filter(task => task.id !== taskId);
-
         if (updatedTasks[dateKey].length === 0) {
           delete updatedTasks[dateKey];
         }
 
+        // Update state FIRST
         setTasks(updatedTasks);
         saveTasks(updatedTasks);
+
+        // THEN store the deleted task data
+        setLastDeletedTask(deletedTask);
+        setLastDeletedDateKey(deletedDateKey);
+
         return true;
       }
     }
@@ -142,19 +148,42 @@ export const useTasks = () => {
 
   // Undo last deletion
   const undoLastDeletion = () => {
-    if (!lastDeletedTask || !lastDeletedDateKey) return false;
+    // Get the current values
+    const taskToRestore = lastDeletedTask;
+    const dateKeyToRestore = lastDeletedDateKey;
 
+    if (!taskToRestore || !dateKeyToRestore) {
+      console.log('No task to undo');
+      return false;
+    }
+
+    console.log('Restoring task:', taskToRestore.title, 'to date:', dateKeyToRestore);
+
+    // Create a fresh copy of tasks
     const updatedTasks = { ...tasks };
+    const existingTasks = updatedTasks[dateKeyToRestore] || [];
 
-    // 🔥 FIX: Create a new array
-    const existingTasks = updatedTasks[lastDeletedDateKey] || [];
-    updatedTasks[lastDeletedDateKey] = [...existingTasks, lastDeletedTask];
+    // Check if task already exists (avoid duplicates)
+    const taskExists = existingTasks.some(t => t.id === taskToRestore.id);
+    if (taskExists) {
+      console.log('Task already exists, skipping restore');
+      setLastDeletedTask(null);
+      setLastDeletedDateKey(null);
+      return false;
+    }
 
+    // Add the task back
+    updatedTasks[dateKeyToRestore] = [...existingTasks, taskToRestore];
+
+    // Update state
     setTasks(updatedTasks);
     saveTasks(updatedTasks);
 
+    // Clear the stored deletion data
     setLastDeletedTask(null);
     setLastDeletedDateKey(null);
+
+    console.log('Task restored successfully');
     return true;
   };
 
@@ -181,6 +210,27 @@ export const useTasks = () => {
       return true;
     }
     return false;
+  };
+
+  const restoreDeletedTask = (dateKey, taskData) => {
+    console.log('Restoring task:', taskData.title);
+
+    // Get current tasks
+    const currentTasks = { ...tasks };
+    const existingTasks = currentTasks[dateKey] || [];
+
+    // ✅ Remove any existing task with the same ID (prevents duplicates)
+    const tasksWithoutDuplicate = existingTasks.filter(t => t.id !== taskData.id);
+
+    // Add the task back
+    currentTasks[dateKey] = [...tasksWithoutDuplicate, taskData];
+
+    // Update state
+    setTasks(currentTasks);
+    saveTasks(currentTasks);
+
+    console.log('Task restored successfully');
+    return true;
   };
 
   // Toggle task completion
@@ -228,5 +278,6 @@ export const useTasks = () => {
     undoLastDeletion,
     clearDeletedTask,
     lastDeletedTask,
+    restoreDeletedTask,
   };
 };

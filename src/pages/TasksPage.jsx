@@ -1,80 +1,127 @@
 // src/pages/TasksPage.jsx
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useTasks } from '../hooks/useTasks';
+import { useLocation } from 'react-router-dom';
+import { useTasksContext } from '../contexts/TasksContext';
+import { useToast } from '../contexts/ToastContext';
 import TaskForm from '../components/TaskForm/TaskForm';
-import SuccessToast from '../components/Calendar/SuccessToast';
 import './TasksPage.css';
 
-function TasksPage() {
+const TasksPage = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { addTask } = useTasks();
-  
-  // Add toast state
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [successToastMessage, setSuccessToastMessage] = useState('');
-  
-  // Get mode from navigation state
-  const mode = location.state?.mode || 'list';
-  const taskId = location.state?.taskId || null;
-  const date = location.state?.date || null;
+  const { showToast } = useToast();
 
-  const [initialData, setInitialData] = useState(null);
+  const {
+    tasks,
+    getTasksForDate,
+    addTask,
+    updateTask,
+    removeTaskById,
+    undoLastDeletion,
+    lastDeletedTask,
+    restoreDeletedTask,
+  } = useTasksContext();
 
-  // Handle save with toast
-  const handleSave = (taskData) => {
-    const dateObj = new Date(taskData.date);
-    const success = addTask(dateObj, taskData);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  // Check if we're in edit mode or manual add mode from navigation state
+  const { mode, taskId, date } = location.state || {};
+
+  useEffect(() => {
+    if (date) {
+      setSelectedDate(date);
+    }
     
+    // If mode is 'manual', open the add form
+    if (mode === 'manual') {
+      setShowAddForm(true);
+    }
+  }, [mode, date]);
+
+  // Handle adding a new task (manual add)
+  const handleAddTask = (taskData) => {
+    // ✅ FIX: Use the date from the form data directly!
+    // The form already includes the date in taskData
+    const dateToUse = taskData.date 
+      ? new Date(taskData.date) 
+      : new Date();
+    
+    // ✅ Remove the date from taskData before passing to addTask
+    // because addTask expects task data without the date field
+    const { date, ...taskDataWithoutDate } = taskData;
+    
+    const success = addTask(dateToUse, taskDataWithoutDate);
     if (success) {
-      // Show success toast
-      setSuccessToastMessage(`Task Added: "${taskData.title}"`);
-      setShowSuccessToast(true);
-      
-      // Navigate back after a brief delay
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
+      showToast(`Task Added: "${taskData.title}"`, 'success', { duration: 3000 });
+      setShowAddForm(false);
+      setSelectedDate(null);
     }
   };
 
-  const handleCancel = () => {
-    navigate('/');
+  // Handle editing a task
+  const handleEditTask = (taskData) => {
+    // We'll implement this in Phase 2
+    console.log('Edit task:', taskData);
   };
 
-  // If mode is manual, show the form
-  if (mode === 'manual') {
+  // If in edit mode, render edit form
+  if (mode === 'edit' && taskId && date) {
+    const tasksForDate = getTasksForDate(date);
+    const taskData = tasksForDate.find(t => t.id === taskId);
+    
+    if (!taskData) {
+      return <div>Task not found</div>;
+    }
+
     return (
       <div className="tasks-page">
+        <div className="tasks-page-header">
+          <h2>Edit Task</h2>
+          <button 
+            className="tasks-page-back"
+            onClick={() => window.history.back()}
+          >
+            ← Back
+          </button>
+        </div>
         <TaskForm
-          mode="manual"
-          onSave={handleSave}
-          onCancel={handleCancel}
-          onClose={handleCancel}
+          mode="edit"
+          initialData={taskData}
+          onSave={(updatedData) => {
+            // We'll implement this in Phase 2
+            console.log('Save edit:', updatedData);
+          }}
+          onCancel={() => window.history.back()}
         />
-        
-        {/* Success Toast */}
-        {showSuccessToast && (
-          <SuccessToast
-            message={successToastMessage}
-            onDismiss={() => setShowSuccessToast(false)}
-            duration={3000}
-          />
-        )}
       </div>
     );
   }
 
-  // Default: show task list (placeholder for now)
+  // Default view - tasks list
   return (
     <div className="tasks-page">
-      <div className="page-container">
-        <h1>📋 All Tasks</h1>
-        <p>Task management coming soon!</p>
+      <div className="tasks-page-header">
+        <h2>All Tasks</h2>
       </div>
+
+      {showAddForm ? (
+        <TaskForm
+          mode="manual"
+          selectedDate={selectedDate}
+          onSave={handleAddTask}
+          onCancel={() => {
+            setShowAddForm(false);
+            setSelectedDate(null);
+          }}
+        />
+      ) : (
+        <div className="tasks-page-content">
+          <p>Select a date to view tasks</p>
+          {/* We'll add task list here in Phase 2 */}
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default TasksPage;

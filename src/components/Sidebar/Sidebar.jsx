@@ -1,3 +1,4 @@
+// src/components/Sidebar/Sidebar.jsx
 import { NavLink, useNavigate } from 'react-router-dom';
 import logo from '../../logo.svg';
 import './Sidebar.css';
@@ -6,6 +7,7 @@ function Sidebar() {
   const navigate = useNavigate();
 
   const handleAddTask = () => {
+    // ✅ Navigate to TasksPage with manual add mode
     navigate('/tasks', { state: { mode: 'manual' } });
   };
 

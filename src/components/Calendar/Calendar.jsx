@@ -1,18 +1,19 @@
+// src/components/Calendar/Calendar.jsx
 import React, { useState } from 'react';
 import { useCalendar } from '../../hooks/useCalendar';
-import { useTasks } from '../../hooks/useTasks';
+import { useTasksContext } from '../../contexts/TasksContext';
+import { useToast } from '../../contexts/ToastContext';
 import CalendarHeader from './CalendarHeader';
 import CalendarGrid from './CalendarGrid';
 import MonthPicker from './MonthPicker';
 import SidePanel from './SidePanel';
 import TaskList from './TaskList';
-import UndoToast from './UndoToast';
-import SuccessToast from './SuccessToast';
 import TaskForm from '../TaskForm/TaskForm';
 import './Calendar.css';
 
 const Calendar = () => {
   const calendar = useCalendar();
+  const { showToast } = useToast();
 
   const {
     tasks,
@@ -26,8 +27,9 @@ const Calendar = () => {
     removeTaskById,
     undoLastDeletion,
     clearDeletedTask,
-    lastDeletedTask
-  } = useTasks();
+    lastDeletedTask,
+    restoreDeletedTask,
+  } = useTasksContext();
 
   // Quick add state
   const [quickAddText, setQuickAddText] = useState('');
@@ -37,13 +39,6 @@ const Calendar = () => {
   const [showQuickAddModal, setShowQuickAddModal] = useState(false);
   const [quickAddTaskId, setQuickAddTaskId] = useState(null);
   const [quickAddTitle, setQuickAddTitle] = useState('');
-
-  // Success Toast state
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [successToastMessage, setSuccessToastMessage] = useState('');
-
-  // Track if undo toast should be shown
-  const [showUndoToast, setShowUndoToast] = useState(false);
 
   // Function to convert Date object to 'YYYY-MM-DD' string
   const getDateKey = (date) => {
@@ -71,7 +66,6 @@ const Calendar = () => {
   }, [selectedDateKey, tasks]);
 
   const remainingTasks = tasksForSelectedDate.filter(task => !task.completed).length;
-  const completedTasks = tasksForSelectedDate.filter(task => task.completed).length;
 
   // Handle Quick Add
   const handleQuickAdd = () => {
@@ -87,11 +81,9 @@ const Calendar = () => {
       return;
     }
 
-    // Generate task ID
     const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const taskTitle = quickAddText.trim();
 
-    // Create task with just title
     const taskData = {
       id: taskId,
       title: taskTitle,
@@ -106,51 +98,35 @@ const Calendar = () => {
     const success = addTask(selectedDate, taskData);
 
     if (success) {
-      // Store for modal
       setQuickAddTitle(taskTitle);
       setQuickAddTaskId(taskId);
       setQuickAddText('');
       setQuickAddError('');
 
-      // Show success toast
-      setSuccessToastMessage(`Task Added: "${taskTitle}"`);
-      setShowSuccessToast(true);
+      showToast(`Task Added: "${taskTitle}"`, 'success', { duration: 3000 });
 
-      // Open modal after toast shows briefly
       setTimeout(() => {
         setShowQuickAddModal(true);
       }, 500);
     }
   };
 
-  // Handle Quick Add Save (from modal)
+  // Handle Quick Add Save
   const handleQuickAddSave = (taskData) => {
     if (quickAddTaskId && selectedDate) {
-      // Update the existing task with new details
       updateTask(selectedDate, quickAddTaskId, taskData);
       setShowQuickAddModal(false);
       setQuickAddTaskId(null);
 
-      // Show updated toast
-      setSuccessToastMessage(`Task Updated: "${taskData.title}"`);
-      setShowSuccessToast(true);
-      setTimeout(() => {
-        setShowSuccessToast(false);
-      }, 3000);
+      showToast(`Task Updated: "${taskData.title}"`, 'success', { duration: 3000 });
     }
   };
 
-  // Handle Quick Add Modal Close (Edit Later)
+  // Handle Quick Add Modal Close
   const handleQuickAddClose = () => {
     setShowQuickAddModal(false);
     setQuickAddTaskId(null);
-
-    // Show a toast reminding user they can edit later
-    setSuccessToastMessage(`Task saved! You can edit it later`);
-    setShowSuccessToast(true);
-    setTimeout(() => {
-      setShowSuccessToast(false);
-    }, 3000);
+    showToast('Task saved! You can edit it later', 'success', { duration: 3000 });
   };
 
   // Handle toggle task
@@ -160,33 +136,46 @@ const Calendar = () => {
     }
   };
 
-  // Handle delete task - show undo toast
   const handleDeleteTask = (taskId) => {
-    if (selectedDate) {
-      const success = removeTaskById(selectedDate, taskId);
-      if (success) {
-        // Show undo toast
-        setShowUndoToast(true);
-      }
+    if (!selectedDate || !selectedDateKey) return;
+
+    console.log('=== DELETE TASK ===');
+    console.log('Selected date key:', selectedDateKey);
+
+    const taskToDelete = tasks[selectedDateKey]?.find(t => t.id === taskId);
+    console.log('Task to delete:', taskToDelete);
+
+    if (!taskToDelete) return;
+
+    const taskData = { ...taskToDelete };
+    const dateKey = selectedDateKey;
+    console.log('Task data captured:', taskData);
+    console.log('Date key captured:', dateKey);
+
+    const success = removeTaskById(selectedDate, taskId);
+    console.log('Delete success:', success);
+
+    if (success) {
+      console.log('Showing toast for:', taskData.title);
+      showToast(
+        `Task Removed: "${taskData.title}"`,
+        'undo',
+        {
+          duration: 10000,
+          onUndo: () => {
+            console.log('=== UNDO CALLED ===');
+            console.log('Restoring with:', { dateKey, taskData });
+            restoreDeletedTask(dateKey, taskData);
+          }
+        }
+      );
     }
-  };
-
-  // Handle undo
-  const handleUndo = () => {
-    undoLastDeletion();
-    setShowUndoToast(false);
-  };
-
-  // Handle undo dismiss (timeout or close)
-  const handleUndoDismiss = () => {
-    setShowUndoToast(false);
-    clearDeletedTask();
   };
 
   // Handle edit task
   const handleEditTask = (taskId) => {
+    // We'll implement this in Phase 2
     console.log('Edit task:', taskId);
-    // We'll implement this later
   };
 
   const handlePrevMonth = () => {
@@ -207,13 +196,10 @@ const Calendar = () => {
     setTimeout(() => setAnimationDirection(''), 300);
   };
 
-  // Handle panel close - clear undo
+  // Panel close - NO LONGER clears toasts
   const handlePanelClose = () => {
     setIsPanelOpen(false);
-    if (showUndoToast) {
-      setShowUndoToast(false);
-      clearDeletedTask();
-    }
+    // Toast persists
   };
 
   return (
@@ -246,9 +232,8 @@ const Calendar = () => {
             isOpen={isPanelOpen}
             onClose={handlePanelClose}
             date={selectedDate}
-            taskCount={remainingTasks} // show remaining tasks count
+            taskCount={remainingTasks}
           >
-            {/* Quick Add Input */}
             <div className="quick-add-container">
               <div className={`quick-add-wrapper ${quickAddError ? 'shake' : ''}`}>
                 <input
@@ -275,16 +260,13 @@ const Calendar = () => {
               )}
             </div>
 
-            {/* Task List */}
             <TaskList
               tasks={tasksForSelectedDate}
               onToggleTask={handleToggleTask}
               onDeleteTask={handleDeleteTask}
               onEditTask={handleEditTask}
-              deletedTaskId={showUndoToast && lastDeletedTask ? lastDeletedTask.id : null}
             />
           </SidePanel>
-
         </div>
 
         {calendar.showMonthPicker && (
@@ -299,7 +281,6 @@ const Calendar = () => {
         )}
       </div>
 
-      {/* Quick Add Modal */}
       {showQuickAddModal && (
         <div className="quick-add-modal-overlay">
           <TaskForm
@@ -317,25 +298,6 @@ const Calendar = () => {
             onClose={handleQuickAddClose}
           />
         </div>
-      )}
-
-      {/* Success Toast */}
-      {showSuccessToast && (
-        <SuccessToast
-          message={successToastMessage}
-          onDismiss={() => setShowSuccessToast(false)}
-          duration={3000}
-        />
-      )}
-
-      {/* Undo Toast - Rendered outside SidePanel */}
-      {showUndoToast && lastDeletedTask && (
-        <UndoToast
-          message={`Task Removed: "${lastDeletedTask.title}"`}
-          onUndo={handleUndo}
-          onDismiss={handleUndoDismiss}
-          duration={10000}
-        />
       )}
     </>
   );

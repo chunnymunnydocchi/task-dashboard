@@ -1,3 +1,4 @@
+// src/components/Calendar/TaskList.jsx
 import React, { useState, useMemo } from 'react';
 import './TaskList.css';
 
@@ -5,8 +6,8 @@ const TaskList = ({
   tasks, 
   onToggleTask, 
   onDeleteTask, 
-  onEditTask,
-  deletedTaskId // ← ADD THIS: ID of the task being deleted
+  onEditTask
+  // REMOVED: deletedTaskId prop
 }) => {
   const [menuOpen, setMenuOpen] = useState(null);
   
@@ -15,13 +16,9 @@ const TaskList = ({
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  // Filter out the deleted task if it exists
-  const visibleTasks = useMemo(() => {
-    if (deletedTaskId) {
-      return tasks.filter(task => task.id !== deletedTaskId);
-    }
-    return tasks;
-  }, [tasks, deletedTaskId]);
+  // REMOVED: The filtering out of deleted task
+  // Now we just use tasks directly since task disappears immediately
+  const visibleTasks = tasks || [];
 
   // Calculate task stats from visible tasks
   const completedCount = visibleTasks.filter(task => task.completed).length;
