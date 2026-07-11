@@ -209,6 +209,8 @@
 /* Status Toggle - NEW STYLE with circle */
 .status-toggle-wrapper {
   display: flex;
+  align-items: center;
+  gap:5px;
 }
 
 .status-toggle-btn {
@@ -324,6 +326,47 @@
   border: none !important;
 }
 
+/* Date display styles and status toggle */
+.form-date-display {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  background: #2a2b2a;
+  border-radius: 8px;
+  border: 1px solid #3d3d3d;
+  color: #d4cec4;
+  font-size: 14px;
+}
+
+.date-text {
+  flex: 1;
+  color: #f0ede8;
+}
+
+.date-lock {
+  color: #8a7e6e;
+  display: flex;
+  align-items: center;
+}
+
+/* Status toggle locked state */
+.status-toggle-btn.locked {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.status-toggle-btn.locked:hover {
+  background: transparent;
+}
+
+.status-hint {
+  display: block;
+  font-size: 12px;
+  padding-left:5px;
+  color: #8a7e6e;
+  font-style: italic;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {
@@ -428,5 +471,9 @@
   .status-toggle-btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .status-hint{
+    padding-left:0;
   }
 }

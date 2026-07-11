@@ -9,7 +9,8 @@ const TaskForm = ({
   selectedDate, // For quick mode (the date from calendar)
   onSave,
   onCancel,
-  onClose      // For closing modal
+  onClose,      // For closing modal
+  onFormChange  // NEW: Callback to track unsaved changes
 }) => {
   // Form state
   const [formData, setFormData] = useState({
@@ -27,11 +28,16 @@ const TaskForm = ({
   const [showEndTime, setShowEndTime] = useState(false);
   const [errors, setErrors] = useState({});
   const [shake, setShake] = useState(false);
+  
+  // NEW: Track initial data for detecting changes
+  const [initialFormData, setInitialFormData] = useState(null);
 
   // Initialize form based on mode
   useEffect(() => {
+    let newFormData;
+    
     if (mode === 'edit' && initialData) {
-      setFormData({
+      newFormData = {
         title: initialData.title || '',
         description: initialData.description || '',
         priority: initialData.priority || 'normal',
@@ -41,13 +47,12 @@ const TaskForm = ({
           end: initialData.timeSchedule?.end || ''
         },
         date: ''
-      });
+      };
       if (initialData.timeSchedule?.end) {
         setShowEndTime(true);
       }
     } else if (mode === 'quick' && initialData) {
-      // ✅ NEW: Quick mode with pre-filled data
-      setFormData({
+      newFormData = {
         title: initialData.title || '',
         description: initialData.description || '',
         priority: initialData.priority || 'normal',
@@ -57,17 +62,67 @@ const TaskForm = ({
           end: initialData.timeSchedule?.end || ''
         },
         date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''
-      });
+      };
       if (initialData.timeSchedule?.end) {
         setShowEndTime(true);
       }
     } else if (mode === 'manual') {
-      setFormData(prev => ({
-        ...prev,
+      newFormData = {
+        title: '',
+        description: '',
+        priority: 'normal',
+        completed: false,
+        timeSchedule: {
+          start: '',
+          end: ''
+        },
         date: format(new Date(), 'yyyy-MM-dd')
-      }));
+      };
+    }
+
+    if (newFormData) {
+      setFormData(newFormData);
+      // Store initial data for change detection
+      setInitialFormData(JSON.parse(JSON.stringify(newFormData)));
     }
   }, [mode, initialData, selectedDate]);
+
+  // NEW: Check if form has unsaved changes
+  const hasUnsavedChanges = () => {
+    if (!initialFormData) return false;
+    
+    // Compare current form data with initial data
+    const current = {
+      title: formData.title,
+      description: formData.description,
+      priority: formData.priority,
+      completed: formData.completed,
+      timeSchedule: {
+        start: formData.timeSchedule.start,
+        end: formData.timeSchedule.end
+      }
+    };
+    
+    const initial = {
+      title: initialFormData.title,
+      description: initialFormData.description,
+      priority: initialFormData.priority,
+      completed: initialFormData.completed,
+      timeSchedule: {
+        start: initialFormData.timeSchedule.start,
+        end: initialFormData.timeSchedule.end
+      }
+    };
+    
+    return JSON.stringify(current) !== JSON.stringify(initial);
+  };
+
+  // NEW: Notify parent of unsaved changes
+  const notifyUnsavedChanges = () => {
+    if (onFormChange) {
+      onFormChange(hasUnsavedChanges());
+    }
+  };
 
   const handleChange = (field, value) => {
     setFormData(prev => ({
@@ -77,6 +132,8 @@ const TaskForm = ({
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
+    // Notify parent about unsaved changes
+    setTimeout(notifyUnsavedChanges, 0);
   };
 
   const handleTimeChange = (type, value) => {
@@ -87,6 +144,8 @@ const TaskForm = ({
         [type]: value
       }
     }));
+    // Notify parent about unsaved changes
+    setTimeout(notifyUnsavedChanges, 0);
   };
 
   const validate = () => {
@@ -139,6 +198,7 @@ const TaskForm = ({
   };
 
   const getCancelButtonText = () => {
+    if (mode === 'edit') return 'Discard Changes'; // CHANGED: "Cancel" → "Discard Changes"
     if (mode === 'quick') return 'Edit Later';
     return 'Cancel';
   };
@@ -149,10 +209,15 @@ const TaskForm = ({
   };
 
   const toggleCompleted = () => {
+    // CHANGED: Don't allow toggling in edit mode
+    if (mode === 'edit') return;
+    
     setFormData(prev => ({
       ...prev,
       completed: !prev.completed
     }));
+    // Notify parent about unsaved changes
+    setTimeout(notifyUnsavedChanges, 0);
   };
 
   const modalClassName = `task-form-container ${mode === 'quick' ? 'quick-mode' : ''}`;
@@ -206,6 +271,24 @@ const TaskForm = ({
                 value={formData.date}
                 onChange={(e) => handleChange('date', e.target.value)}
               />
+            </div>
+          )}
+
+          {/* CHANGED: Show date as read-only label in edit mode */}
+          {mode === 'edit' && initialData && (
+            <div className="form-group">
+              <label>Task Date</label>
+              <div className="form-date-display">
+                <span className="material-icons" style={{ fontSize: '18px', marginRight: '8px', color: '#8a7e6e' }}>
+                  calendar_today
+                </span>
+                <span className="date-text">
+                  {format(new Date(initialData.createdAt), 'EEEE, MMMM d, yyyy')}
+                </span>
+                <span className="date-lock">
+                  <span className="material-icons" style={{ fontSize: '16px' }}>lock</span>
+                </span>
+              </div>
             </div>
           )}
 
@@ -278,13 +361,19 @@ const TaskForm = ({
             </div>
           </div>
 
-          {/* Task Status - NEW STYLE with circle toggle */}
+          {/* Task Status - CHANGED: Locked in edit mode */}
           <div className="form-group">
             <label>Task Status</label>
             <div className="status-toggle-wrapper">
               <button
-                className={`status-toggle-btn ${formData.completed ? 'completed' : ''}`}
+                className={`status-toggle-btn ${formData.completed ? 'completed' : ''} ${mode === 'edit' ? 'locked' : ''}`}
                 onClick={toggleCompleted}
+                disabled={mode === 'edit'}
+                style={{ 
+                  opacity: mode === 'edit' ? 0.6 : 1,
+                  cursor: mode === 'edit' ? 'default' : 'pointer'
+                }}
+                title={mode === 'edit' ? 'Status cannot be changed in edit mode' : ''}
               >
                 <span className="status-circle">
                   {formData.completed ? (
@@ -296,7 +385,17 @@ const TaskForm = ({
                 <span className="status-label">
                   {formData.completed ? 'Complete' : 'Incomplete'}
                 </span>
+                {mode === 'edit' && (
+                  <span className="status-lock-icon">
+                    <span className="material-icons" style={{ fontSize: '14px', marginLeft: '8px', color: '#8a7e6e' }}>
+                      lock
+                    </span>
+                  </span>
+                )}
               </button>
+              {mode === 'edit' && (
+                <span className="status-hint">Status can be toggled from the task list</span>
+              )}
             </div>
           </div>
 

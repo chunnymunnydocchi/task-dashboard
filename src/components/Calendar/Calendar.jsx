@@ -1,5 +1,6 @@
 // src/components/Calendar/Calendar.jsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCalendar } from '../../hooks/useCalendar';
 import { useTasksContext } from '../../contexts/TasksContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -14,6 +15,7 @@ import './Calendar.css';
 const Calendar = () => {
   const calendar = useCalendar();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const {
     tasks,
@@ -172,10 +174,31 @@ const Calendar = () => {
     }
   };
 
-  // Handle edit task
+  // Handle edit task - UPDATED: Navigate to TasksPage with edit state
   const handleEditTask = (taskId) => {
-    // We'll implement this in Phase 2
     console.log('Edit task:', taskId);
+    
+    // Find the task in the current selected date's tasks
+    const task = tasksForSelectedDate.find(t => t.id === taskId);
+    
+    if (task) {
+      console.log('Task found:', task);
+      // Navigate to TasksPage with edit mode state
+      navigate('/tasks', {
+        state: {
+          mode: 'edit',
+          taskId: task.id,
+          date: selectedDate, // Pass the Date object
+          taskData: task // Pass full task data to avoid race conditions
+        }
+      });
+    } else {
+      // Task not found - show error toast
+      console.error('Task not found:', taskId);
+      showToast('Task not found. Please refresh the page.', 'error', { 
+        duration: 5000
+      });
+    }
   };
 
   const handlePrevMonth = () => {
