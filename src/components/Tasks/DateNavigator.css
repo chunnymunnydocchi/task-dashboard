@@ -1,0 +1,94 @@
+/* src/components/Tasks/DateNavigator.css */
+
+.date-navigator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 0 16px 0;
+    width: 100%;
+    background: transparent;
+}
+
+.nav-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--iron-fixture);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.nav-btn:hover {
+    background: var(--warm-paper);
+    color: var(--cynical-black);
+}
+
+.nav-btn .material-icons {
+    font-size: 24px;
+}
+
+.date-display {
+    padding: 6px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+    min-width: 160px;
+    justify-content: center;
+}
+
+.date-display:hover {
+    background: var(--warm-paper);
+    border-color: var(--warm-border);
+}
+
+.date-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--cynical-black);
+}
+
+.date-icon {
+    font-size: 20px;
+    color: var(--grey);
+    transition: transform 0.2s ease;
+}
+
+.date-display:hover .date-icon {
+    transform: rotate(180deg);
+}
+
+@media (max-width: 768px) {
+    .date-navigator {
+        padding: 6px 0 12px 0;
+        gap: 4px;
+    }
+
+    .date-label {
+        font-size: 14px;
+    }
+
+    .date-display {
+        min-width: 120px;
+        padding: 4px 12px;
+    }
+
+    .nav-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .nav-btn .material-icons {
+        font-size: 20px;
+    }
+}

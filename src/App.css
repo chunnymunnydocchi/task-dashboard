@@ -122,3 +122,25 @@ body {
     transform: translateX(220px);
   }
 }
+
+/* Tasks Page - Remove padding */
+.main-content.tasks-page-active {
+  padding: 0 !important;
+}
+
+.main-content.tasks-page-active .task-dashboard {
+  padding: 0 30px; /* Restore horizontal padding only */
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .main-content.tasks-page-active .task-dashboard {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content.tasks-page-active .task-dashboard {
+    padding: 0 12px;
+  }
+}

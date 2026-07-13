@@ -1,0 +1,405 @@
+/* src/components/Tasks/Timeline/TimelinePhase.css */
+
+.timeline-phase {
+    padding: 16px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    transition: min-height 0.3s ease;
+}
+
+.timeline-phase.collapsed {
+    min-height: auto;
+}
+
+.phase-midnight {
+    background: rgba(25, 25, 50, 0.06);
+}
+
+.phase-morning {
+    background: rgba(255, 200, 100, 0.08);
+}
+
+.phase-afternoon {
+    background: rgba(100, 200, 255, 0.06);
+}
+
+.phase-evening {
+    background: rgba(200, 100, 50, 0.06);
+}
+
+.timeline-phase.empty {
+    opacity: 0.5;
+}
+
+/* Phase Header - Clickable */
+.phase-header {
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+}
+
+.phase-header:hover {
+    opacity: 0.8;
+}
+
+.phase-header:active {
+    transform: scale(0.98);
+}
+
+.phase-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.phase-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.phase-toggle .material-icons {
+    font-size: 20px;
+    color: var(--iron-fixture);
+}
+
+.phase-label {
+    font-size: 16px;
+    font-weight: 700;
+    color: black;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.phase-range {
+    font-size: 12px;
+    color: var(--iron-fixture);
+    font-weight: 500;
+}
+
+.phase-count {
+    font-size: 12px;
+    color: var(--iron-fixture);
+    font-weight: 500;
+    background: var(--warm-paper);
+    padding: 0 8px;
+    border-radius: 10px;
+}
+
+/* Phase Tasks Wrapper - For collapse animation */
+.phase-tasks-wrapper {
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 2000px; /* Large enough for all tasks */
+}
+
+.phase-tasks-wrapper.collapsed {
+    max-height: 0;
+}
+
+/* Phase Tasks */
+.phase-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+}
+
+.phase-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: var(--grey);
+    font-size: 13px;
+    gap: 4px;
+}
+
+.phase-empty .material-icons {
+    font-size: 24px;
+    color: var(--warm-border);
+}
+
+/* Timeline Task Item */
+.timeline-task-item {
+    background: white;
+    border-radius: 8px;
+    padding: 12px 14px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.timeline-task-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.timeline-task-item.highlighted {
+    border: 2px solid var(--gold-soft);
+    box-shadow: 0 0 0 4px rgba(200, 164, 126, 0.2);
+    animation: glow 2s ease-in-out 2;
+}
+
+@keyframes glow {
+    0%,
+    100% {
+        box-shadow: 0 0 0 4px rgba(200, 164, 126, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(200, 164, 126, 0.4);
+    }
+}
+
+.timeline-task-time {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--cynical-black);
+}
+
+.timeline-task-time .material-icons {
+    font-size: 16px;
+    color: var(--grey);
+}
+
+.time-separator {
+    color: var(--grey);
+    font-size: 12px;
+}
+
+.timeline-task-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.timeline-task-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.timeline-task-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cynical-black);
+    flex: 1;
+    min-width: 80px;
+}
+
+.timeline-task-priority {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.timeline-task-priority .material-icons {
+    font-size: 14px;
+}
+
+.priority-high {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+}
+
+.priority-high .material-icons {
+    color: #e74c3c;
+}
+
+.priority-medium {
+    background: rgba(243, 156, 18, 0.1);
+    color: #f39c12;
+}
+
+.priority-medium .material-icons {
+    color: #f39c12;
+}
+
+.priority-low {
+    background: rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+}
+
+.priority-low .material-icons {
+    color: #2ecc71;
+}
+
+.priority-normal {
+    background: var(--warm-paper);
+    color: var(--iron-fixture);
+}
+
+.priority-normal .material-icons {
+    color: var(--grey);
+}
+
+.timeline-task-status {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--grey);
+}
+
+.timeline-task-status .material-icons {
+    font-size: 16px;
+}
+
+.timeline-task-status.completed {
+    color: var(--green-forest);
+}
+
+.timeline-task-status.completed .material-icons {
+    color: var(--green-forest);
+}
+
+.timeline-task-description {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--iron-fixture);
+}
+
+.timeline-task-description .material-icons {
+    font-size: 16px;
+    color: var(--grey);
+}
+
+/* ============================================ */
+/* MOBILE STYLES (481px - 768px) */
+/* ============================================ */
+@media (max-width: 768px) {
+    .timeline-phase {
+        padding: 14px 12px;
+        min-height: auto;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .phase-header {
+        padding: 8px 0;
+        margin-bottom: 8px;
+    }
+
+    .phase-label {
+        font-size: 16px;
+        letter-spacing: 3px;
+    }
+
+    .phase-range {
+        font-size: 11px;
+    }
+
+    .phase-count {
+        font-size: 11px;
+    }
+
+    .phase-toggle .material-icons {
+        font-size: 22px;
+    }
+
+    .timeline-task-item {
+        padding: 10px 12px;
+    }
+
+    .timeline-task-main {
+        gap: 6px;
+    }
+
+    .timeline-task-title {
+        font-size: 13px;
+        width: 100%;
+    }
+
+    .timeline-task-priority {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .timeline-task-status {
+        font-size: 11px;
+    }
+
+    .phase-header:hover {
+        opacity: 0.7;
+    }
+}
+
+/* ============================================ */
+/* SMALL MOBILE (480px and below) */
+/* ============================================ */
+@media (max-width: 480px) {
+    .timeline-phase {
+        padding: 10px 8px;
+    }
+
+    .phase-header {
+        padding: 6px 0;
+        margin-bottom: 6px;
+    }
+
+    .phase-label {
+        font-size: 14px;
+        letter-spacing: 2px;
+    }
+
+    .phase-info {
+        gap: 6px;
+    }
+
+    .phase-range {
+        font-size: 10px;
+    }
+
+    .phase-count {
+        font-size: 10px;
+        padding: 0 6px;
+    }
+
+    .phase-toggle .material-icons {
+        font-size: 20px;
+    }
+
+    .timeline-task-item {
+        padding: 8px 10px;
+        border-radius: 6px;
+    }
+
+    .timeline-task-time {
+        font-size: 12px;
+    }
+
+    .timeline-task-title {
+        font-size: 12px;
+    }
+
+    .timeline-task-description {
+        font-size: 12px;
+    }
+
+    .timeline-task-priority {
+        font-size: 9px;
+        padding: 1px 5px;
+    }
+
+    .timeline-task-status {
+        font-size: 10px;
+    }
+}

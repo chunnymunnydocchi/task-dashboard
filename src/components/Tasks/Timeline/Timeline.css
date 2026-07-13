@@ -1,0 +1,58 @@
+/* src/components/Tasks/Timeline/Timeline.css */
+
+.timeline-container {
+  width: 100%;
+  padding: 0;
+  flex: 1;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.timeline-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 0;
+  color: var(--grey);
+  gap: 8px;
+}
+
+.timeline-empty .material-icons {
+  font-size: 48px;
+  color: var(--warm-border);
+}
+
+.timeline-empty .empty-hint {
+  font-size: 13px;
+  color: var(--grey);
+}
+
+.timeline-phases {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  background: white;
+  border-radius: 0;
+  overflow: hidden;
+  min-height: 300px;
+}
+
+/* ============================================ */
+/* MOBILE - Stack vertically */
+/* ============================================ */
+@media (max-width: 768px) {
+  .timeline-phases {
+    grid-template-columns: 1fr;
+    border-radius: 0;
+    min-height: auto;
+  }
+
+  .timeline-container {
+    padding: 0;
+    overflow-y: auto;
+    height: 100%;
+  }
+}

@@ -1,23 +1,66 @@
 /* src/pages/TasksPage.css */
-.tasks-page {
+
+.task-dashboard {
   min-height: 100vh;
-  background: var(--warm-cream, #f5f0e8);
+  background: var(--warm-cream);
+  padding:0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scroll to Top Button */
+.scroll-to-top-btn {
+  position: fixed;
+  bottom: 90px; /* Above floating button */
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--warm-paper);
+  border: 1px solid var(--warm-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 50;
+  color: var(--iron-fixture);
+  animation: fadeIn 0.3s ease;
 }
 
-.page-container {
-  max-width: 800px;
-  width: 100%;
-  padding: 40px 24px;
+.scroll-to-top-btn:hover {
+  background: var(--warm-border);
+  transform: scale(1.05);
 }
 
-.page-container h1 {
-  color: var(--cynical-black, #171817);
-  margin-bottom: 8px;
+.scroll-to-top-btn:active {
+  transform: scale(0.95);
 }
 
-.page-container p {
-  color: var(--grey, #807e80);
+.scroll-to-top-btn .material-icons {
+  font-size: 20px;
+}
+
+@media (max-width: 480px) {
+  .scroll-to-top-btn {
+    bottom: 76px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .scroll-to-top-btn .material-icons {
+    font-size: 18px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .task-dashboard {
+    margin-left: 0;
+    width: 100%;
+    padding: 12px 0 0 0;
+  }
 }

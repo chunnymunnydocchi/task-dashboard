@@ -138,6 +138,12 @@ const Calendar = () => {
     }
   };
 
+  const handleViewMore = (task) => {
+    // Navigate to TasksPage with task and date
+    const dateKey = selectedDateKey; // You have this from earlier
+    navigate(`/tasks?date=${dateKey}&taskId=${task.id}`);
+  };
+
   const handleDeleteTask = (taskId) => {
     if (!selectedDate || !selectedDateKey) return;
 
@@ -177,10 +183,10 @@ const Calendar = () => {
   // Handle edit task - UPDATED: Navigate to TasksPage with edit state
   const handleEditTask = (taskId) => {
     console.log('Edit task:', taskId);
-    
+
     // Find the task in the current selected date's tasks
     const task = tasksForSelectedDate.find(t => t.id === taskId);
-    
+
     if (task) {
       console.log('Task found:', task);
       // Navigate to TasksPage with edit mode state
@@ -195,7 +201,7 @@ const Calendar = () => {
     } else {
       // Task not found - show error toast
       console.error('Task not found:', taskId);
-      showToast('Task not found. Please refresh the page.', 'error', { 
+      showToast('Task not found. Please refresh the page.', 'error', {
         duration: 5000
       });
     }
@@ -288,6 +294,7 @@ const Calendar = () => {
               onToggleTask={handleToggleTask}
               onDeleteTask={handleDeleteTask}
               onEditTask={handleEditTask}
+              onViewMore={handleViewMore}
             />
           </SidePanel>
         </div>

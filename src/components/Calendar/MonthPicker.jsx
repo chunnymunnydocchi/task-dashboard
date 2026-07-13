@@ -1,43 +1,46 @@
+// src/components/Calendar/MonthPicker.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import './MonthPicker.css';
 
 const MonthPicker = ({
-    currentMonth,
-    currentYear,
+    currentMonth,  // This is the month NAME (string) from Calendar
+    currentYear,   // This is the year (number)
     onConfirm,
-    onCancel
+    onCancel,
+    mode = 'month-year'
 }) => {
-    // State for selected month and year
-    const [selectedMonth, setSelectedMonth] = useState(currentMonth);
-    const [selectedYear, setSelectedYear] = useState(currentYear);
-
-    // Refs for scroll containers
-    const monthContainerRef = useRef(null);
-    const yearContainerRef = useRef(null);
-
-    // Month names
-    const months = [
+    // Get month index from the month name
+    const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
-    // Years range (current year - 5 to +5)
+    // If currentMonth is a string (from Calendar), find its index
+    // If it's a number (from DatePicker), use it directly
+    const getMonthIndex = (month) => {
+        if (typeof month === 'string') {
+            return monthNames.indexOf(month);
+        }
+        return typeof month === 'number' ? month : 0;
+    };
+
+    const [selectedMonthIndex, setSelectedMonthIndex] = useState(getMonthIndex(currentMonth));
+    const [selectedYear, setSelectedYear] = useState(currentYear);
+
+    const monthContainerRef = useRef(null);
+    const yearContainerRef = useRef(null);
+
     const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
 
-    // Scroll to selected item when picker opens
     useEffect(() => {
-        // Small delay to ensure DOM is rendered
         setTimeout(() => {
-            // Scroll to selected month
             if (monthContainerRef.current) {
-                const monthIndex = months.indexOf(selectedMonth);
-                const monthItem = monthContainerRef.current.children[monthIndex];
+                const monthItem = monthContainerRef.current.children[selectedMonthIndex];
                 if (monthItem) {
                     monthItem.scrollIntoView({ block: 'center', behavior: 'auto' });
                 }
             }
 
-            // Scroll to selected year
             if (yearContainerRef.current) {
                 const yearIndex = years.indexOf(selectedYear);
                 const yearItem = yearContainerRef.current.children[yearIndex];
@@ -46,10 +49,10 @@ const MonthPicker = ({
                 }
             }
         }, 50);
-    }, [months, selectedMonth, selectedYear, years]);
+    }, [selectedMonthIndex, selectedYear]);
 
-    const handleMonthSelect = (month) => {
-        setSelectedMonth(month);
+    const handleMonthSelect = (index) => {
+        setSelectedMonthIndex(index);
     };
 
     const handleYearSelect = (year) => {
@@ -57,22 +60,22 @@ const MonthPicker = ({
     };
 
     const handleConfirm = () => {
-        onConfirm(selectedMonth, selectedYear);
+        // ALWAYS pass back the month NAME and year NUMBER
+        const monthName = monthNames[selectedMonthIndex];
+        onConfirm(monthName, selectedYear);
     };
 
-    // Keyboard arrow support with smooth scrolling
     const handleKeyDown = (e, type) => {
         if (type === 'month') {
-            const currentIndex = months.indexOf(selectedMonth);
-            if (e.key === 'ArrowDown' && currentIndex < months.length - 1) {
+            if (e.key === 'ArrowDown' && selectedMonthIndex < monthNames.length - 1) {
                 e.preventDefault();
-                const newIndex = currentIndex + 1;
-                setSelectedMonth(months[newIndex]);
+                const newIndex = selectedMonthIndex + 1;
+                setSelectedMonthIndex(newIndex);
                 scrollToItem(monthContainerRef, newIndex);
-            } else if (e.key === 'ArrowUp' && currentIndex > 0) {
+            } else if (e.key === 'ArrowUp' && selectedMonthIndex > 0) {
                 e.preventDefault();
-                const newIndex = currentIndex - 1;
-                setSelectedMonth(months[newIndex]);
+                const newIndex = selectedMonthIndex - 1;
+                setSelectedMonthIndex(newIndex);
                 scrollToItem(monthContainerRef, newIndex);
             }
         } else if (type === 'year') {
@@ -101,17 +104,16 @@ const MonthPicker = ({
     };
 
     return (
-        <div className="month-picker-overlay" onClick={(e) => {
-            // Close when clicking outside the modal
-            if (e.target === e.currentTarget) {
-                onCancel();
-            }
-        }}>
+        <div className={`month-picker-overlay ${mode === 'date-picker' ? 'date-picker-mode' : ''}`} 
+             onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                    onCancel();
+                }
+            }}>
             <div className="month-picker-modal">
                 <h3 className="picker-title">Select Month &amp; Year</h3>
 
                 <div className="picker-content">
-                    {/* Months List */}
                     <div className="picker-column">
                         <div 
                             className="picker-list" 
@@ -121,13 +123,13 @@ const MonthPicker = ({
                             role="listbox"
                             aria-label="Months"
                         >
-                            {months.map((month) => (
+                            {monthNames.map((month, index) => (
                                 <div
                                     key={month}
-                                    className={`picker-item ${selectedMonth === month ? 'selected' : ''}`}
-                                    onClick={() => handleMonthSelect(month)}
+                                    className={`picker-item ${selectedMonthIndex === index ? 'selected' : ''}`}
+                                    onClick={() => handleMonthSelect(index)}
                                     role="option"
-                                    aria-selected={selectedMonth === month}
+                                    aria-selected={selectedMonthIndex === index}
                                 >
                                     {month}
                                 </div>
@@ -135,7 +137,6 @@ const MonthPicker = ({
                         </div>
                     </div>
 
-                    {/* Years List */}
                     <div className="picker-column">
                         <div 
                             className="picker-list" 

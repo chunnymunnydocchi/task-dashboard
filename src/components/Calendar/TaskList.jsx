@@ -6,8 +6,8 @@ const TaskList = ({
   tasks, 
   onToggleTask, 
   onDeleteTask, 
-  onEditTask
-  // REMOVED: deletedTaskId prop
+  onEditTask,
+  onViewMore // NEW: View More handler
 }) => {
   const [menuOpen, setMenuOpen] = useState(null);
   
@@ -16,8 +16,6 @@ const TaskList = ({
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  // REMOVED: The filtering out of deleted task
-  // Now we just use tasks directly since task disappears immediately
   const visibleTasks = tasks || [];
 
   // Calculate task stats from visible tasks
@@ -29,19 +27,16 @@ const TaskList = ({
   const filteredAndSortedTasks = useMemo(() => {
     let result = [...visibleTasks];
 
-    // Apply priority filter
     if (priorityFilter !== 'all') {
       result = result.filter(task => task.priority === priorityFilter);
     }
 
-    // Apply status filter
     if (statusFilter === 'open') {
       result = result.filter(task => !task.completed);
     } else if (statusFilter === 'done') {
       result = result.filter(task => task.completed);
     }
 
-    // Apply sorting
     switch (sortBy) {
       case 'recent':
         result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -104,6 +99,13 @@ const TaskList = ({
   const handleEdit = (taskId) => {
     if (onEditTask) {
       onEditTask(taskId);
+    }
+    setMenuOpen(null);
+  };
+
+  const handleViewMore = (task) => {
+    if (onViewMore) {
+      onViewMore(task);
     }
     setMenuOpen(null);
   };
@@ -275,6 +277,13 @@ const TaskList = ({
                 {/* Dropdown menu */}
                 {menuOpen === task.id && (
                   <div className="task-dropdown">
+                    <button 
+                      className="dropdown-item view-more"
+                      onClick={() => handleViewMore(task)}
+                    >
+                      <span className="material-icons" style={{ fontSize: '18px' }}>visibility</span>
+                      View More
+                    </button>
                     <button 
                       className="dropdown-item edit"
                       onClick={() => handleEdit(task.id)}
