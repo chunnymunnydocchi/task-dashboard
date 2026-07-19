@@ -7,10 +7,15 @@ const TimelinePhase = ({
   tasks,
   highlightedTaskId = null,
   onToggleCollapse,
-  isCollapsed = false
+  isCollapsed = false,
+  onViewTask,
+  onEditTask,
+  onDeleteTask,
+  registerTaskRef,
 }) => {
   const phaseRef = useRef(null);
   const [collapsed, setCollapsed] = useState(isCollapsed);
+  const taskRefs = useRef({});
 
   useEffect(() => {
     if (highlightedTaskId && tasks.some(t => t.id === highlightedTaskId)) {
@@ -21,6 +26,18 @@ const TimelinePhase = ({
       }, 100);
     }
   }, [highlightedTaskId, tasks]);
+
+  // Register refs when they're created
+  useEffect(() => {
+    if (registerTaskRef) {
+      Object.keys(taskRefs.current).forEach(taskId => {
+        const ref = taskRefs.current[taskId];
+        if (ref && ref.current) {
+          registerTaskRef(taskId, ref);
+        }
+      });
+    }
+  }, [tasks, registerTaskRef]); // Re-run when tasks change
 
   const getPhaseColorClass = () => {
     switch (phase.id) {
@@ -71,6 +88,13 @@ const TimelinePhase = ({
     }
   };
 
+  const handleTaskClick = (task, e) => {
+    if (onViewTask) {
+      const ref = taskRefs.current[task.id] || null;
+      onViewTask(task, ref);
+    }
+  };
+
   return (
     <div 
       ref={phaseRef}
@@ -106,10 +130,18 @@ const TimelinePhase = ({
           ) : (
             tasks.map(task => {
               const isHighlighted = highlightedTaskId === task.id;
+              
+              // Create ref if it doesn't exist
+              if (!taskRefs.current[task.id]) {
+                taskRefs.current[task.id] = React.createRef();
+              }
+              
               return (
                 <div 
                   key={task.id}
+                  ref={taskRefs.current[task.id]}
                   className={`timeline-task-item ${isHighlighted ? 'highlighted' : ''}`}
+                  onClick={(e) => handleTaskClick(task, e)}
                 >
                   <div className="timeline-task-time">
                     <span className="material-icons">schedule</span>

@@ -8,7 +8,8 @@ const DateNavigator = ({
     date,
     onDateChange,
     tasksData = {},
-    showAddButton = true
+    showAddButton = true,
+    onAddTask
 }) => {
     const [showPicker, setShowPicker] = useState(false);
 
@@ -56,6 +57,21 @@ const DateNavigator = ({
                 >
                     <span className="material-icons">chevron_right</span>
                 </button>
+
+                {/* Add Task Button with Tooltip */}
+                {showAddButton && onAddTask && (
+                    <button 
+                        className="add-task-btn"
+                        onClick={onAddTask}
+                        aria-label="Add task"
+                    >
+                        <span className="material-icons">add</span>
+                        Add Task
+                        <span className="add-task-tooltip">
+                            Saves to {format(date, 'MMMM d, yyyy')}
+                        </span>
+                    </button>
+                )}
             </div>
 
             {showPicker && (

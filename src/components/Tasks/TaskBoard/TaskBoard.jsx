@@ -1,5 +1,5 @@
 // src/components/Tasks/TaskBoard/TaskBoard.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -27,7 +27,11 @@ const DraggableTaskCard = ({
   isUnpinned, 
   onPinClick, 
   isMobile,
-  isDragDisabled 
+  isDragDisabled,
+  onView,
+  onEdit,
+  onDelete,
+  cardRef,
 }) => {
   const {
     attributes,
@@ -56,6 +60,31 @@ const DraggableTaskCard = ({
     }
   };
 
+  const handleCardClick = (e) => {
+    // Don't trigger if clicking on buttons
+    if (e.target.closest('.task-card-pin') || 
+        e.target.closest('.task-board-action-btn')) {
+      return;
+    }
+    if (onView) {
+      onView(task);
+    }
+  };
+
+  const handleEditClick = (e) => {
+    e.stopPropagation();
+    if (onEdit) {
+      onEdit(task);
+    }
+  };
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(task.id);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -63,6 +92,7 @@ const DraggableTaskCard = ({
       className={`task-board-card ${isUnpinned ? 'unpinned' : ''} ${isDragging ? 'dragging' : ''} ${isMobile ? 'mobile-card' : ''}`}
       {...attributes}
       {...listeners}
+      onClick={handleCardClick}
     >
       <div 
         className={`task-card-pin ${isUnpinned ? 'unpinned-state' : ''}`}
@@ -107,6 +137,28 @@ const DraggableTaskCard = ({
           <span>Drag to reorder</span>
         </div>
       )}
+      
+      {/* Action Buttons */}
+      <div className="task-board-actions">
+        {onEdit && (
+          <button 
+            className="task-board-action-btn edit-btn"
+            onClick={handleEditClick}
+            aria-label="Edit task"
+          >
+            <span className="material-icons">edit</span>
+          </button>
+        )}
+        {onDelete && (
+          <button 
+            className="task-board-action-btn delete-btn"
+            onClick={handleDeleteClick}
+            aria-label="Delete task"
+          >
+            <span className="material-icons">delete</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 };
@@ -126,6 +178,9 @@ const TaskBoard = ({
   const [unpinnedTasks, setUnpinnedTasks] = useState({});
   const [localTasks, setLocalTasks] = useState([]);
   const [activeId, setActiveId] = useState(null);
+  
+  // Store refs for each task card
+  const taskRefs = useRef({});
 
   // Load tasks from props and localStorage order
   useEffect(() => {
@@ -148,6 +203,12 @@ const TaskBoard = ({
     }
     
     setLocalTasks(orderedTasks);
+    
+    // Reset refs when tasks change
+    taskRefs.current = {};
+    orderedTasks.forEach(task => {
+      taskRefs.current[task.id] = React.createRef();
+    });
   }, [tasks]);
 
   useEffect(() => {
@@ -235,6 +296,14 @@ const TaskBoard = ({
     setActiveId(null);
   };
 
+  // Handle view task with ref
+  const handleViewTask = (task) => {
+    if (onViewTask) {
+      const ref = taskRefs.current[task.id] || null;
+      onViewTask(task, ref);
+    }
+  };
+
   const renderTaskList = (tasksList, isMobileView = false) => {
     if (tasksList.length === 0) {
       return (
@@ -262,14 +331,24 @@ const TaskBoard = ({
               const isUnpinned = !!unpinnedTasks[task.id];
               const isDragDisabled = !isUnpinned;
               
+              // Ensure ref exists
+              if (!taskRefs.current[task.id]) {
+                taskRefs.current[task.id] = React.createRef();
+              }
+              
               return (
                 <DraggableTaskCard
                   key={task.id}
+                  ref={taskRefs.current[task.id]}
                   task={task}
                   isUnpinned={isUnpinned}
                   onPinClick={handlePinClick}
                   isMobile={isMobileView}
                   isDragDisabled={isDragDisabled}
+                  onView={() => handleViewTask(task)}
+                  onEdit={onEditTask}
+                  onDelete={onDeleteTask}
+                  cardRef={taskRefs.current[task.id]}
                 />
               );
             })}

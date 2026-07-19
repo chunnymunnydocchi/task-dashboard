@@ -15,11 +15,11 @@ const Timeline = ({
   onViewTask,
   onEditTask,
   onDeleteTask,
-  highlightedTaskId = null
+  highlightedTaskId = null,
+  registerTaskRef, // NEW
 }) => {
   const [collapsedPhases, setCollapsedPhases] = useState({});
 
-  // Group tasks by phase
   const groupedTasks = useMemo(() => {
     const groups = PHASES.map(phase => ({
       ...phase,
@@ -39,7 +39,6 @@ const Timeline = ({
       }
     });
 
-    // Sort tasks by start time within each phase
     groups.forEach(group => {
       group.tasks.sort((a, b) => {
         return a.timeSchedule.start.localeCompare(b.timeSchedule.start);
@@ -84,6 +83,7 @@ const Timeline = ({
             highlightedTaskId={highlightedTaskId}
             isCollapsed={collapsedPhases[phase.id] || false}
             onToggleCollapse={handleToggleCollapse}
+            registerTaskRef={registerTaskRef} // NEW
           />
         ))}
       </div>

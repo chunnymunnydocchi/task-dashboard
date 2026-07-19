@@ -415,6 +415,71 @@
 }
 
 /* ============================================ */
+/* TASK BOARD ACTION BUTTONS */
+/* ============================================ */
+.task-board-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.task-board-action-btn {
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: var(--grey);
+  font-size: 12px;
+}
+
+.task-board-action-btn .material-icons {
+  font-size: 16px;
+}
+
+.task-board-action-btn:hover {
+  background: var(--warm-paper);
+}
+
+.task-board-action-btn.edit-btn:hover {
+  color: #4a9eff;
+  background: rgba(74, 158, 255, 0.1);
+}
+
+.task-board-action-btn.delete-btn:hover {
+  color: var(--red-coral);
+  background: rgba(212, 132, 122, 0.1);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .task-board-action-btn {
+    padding: 6px 10px;
+  }
+  
+  .task-board-action-btn .material-icons {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-board-action-btn {
+    padding: 4px 8px;
+  }
+  
+  .task-board-action-btn .material-icons {
+    font-size: 16px;
+  }
+}
+
+/* ============================================ */
 /* MOBILE VIEW */
 /* ============================================ */
 @media (max-width: 768px) {
