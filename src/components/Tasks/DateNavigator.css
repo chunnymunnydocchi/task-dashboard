@@ -101,7 +101,7 @@
   font-size: 18px;
 }
 
-/* Tooltip - Positioned to the RIGHT of the button */
+/* Tooltip - Positioned to the RIGHT of the button (Desktop) */
 .add-task-btn .add-task-tooltip {
   position: absolute;
   left: calc(100% + 12px);
@@ -126,7 +126,7 @@
   transform: translateY(-50%) translateX(4px);
 }
 
-/* Tooltip arrow pointing left */
+/* Tooltip arrow pointing left (Desktop) */
 .add-task-btn .add-task-tooltip::before {
   content: '';
   position: absolute;
@@ -147,25 +147,27 @@
     font-size: 16px;
   }
   
-  /* On mobile, show tooltip above instead (more room) */
+  /* On mobile, show tooltip BELOW the button (fixed - was ABOVE) */
   .add-task-btn .add-task-tooltip {
     left: 50%;
-    top: auto;
-    bottom: calc(100% + 8px);
+    top: calc(100% + 8px); /* Position below the button */
+    bottom: auto;
     transform: translateX(-50%) translateY(0);
   }
   
   .add-task-btn:hover .add-task-tooltip {
-    transform: translateX(-50%) translateY(-2px);
+    transform: translateX(-50%) translateY(2px);
   }
   
+  /* Tooltip arrow pointing UP (from tooltip to button) */
   .add-task-btn .add-task-tooltip::before {
     right: auto;
     left: 50%;
-    top: 100%;
+    top: -12px; /* Position at top of tooltip */
+    bottom: auto;
     transform: translateX(-50%);
     border-right-color: transparent;
-    border-top-color: #1e1f1e;
+    border-bottom-color: #1e1f1e; /* Arrow points down from button */
   }
 }
 

@@ -3,16 +3,91 @@
 .task-dashboard {
   min-height: 100vh;
   background: var(--warm-cream);
-  padding:0;
+  padding: 0;
   width: 100%;
   display: flex;
   flex-direction: column;
 }
 
+/* ============ TASK FORM OVERLAY ============ */
+.task-form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.task-form-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(23, 24, 23, 0.4);
+  pointer-events: auto;
+  animation: fadeIn 0.2s ease;
+}
+
+.task-form-wrapper {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+  padding: 16px;
+}
+
+/* Override TaskForm styles to work in overlay */
+.task-form-wrapper .task-form-modal {
+  position: relative;
+  background: transparent;
+}
+
+.task-form-wrapper .task-form-container {
+  background: var(--warm-cream);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--warm-border);
+}
+
+.task-form-wrapper .task-form-backdrop {
+  display: none; /* Hide the internal backdrop */
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* Scroll to Top Button */
 .scroll-to-top-btn {
   position: fixed;
-  bottom: 90px; /* Above floating button */
+  bottom: 90px;
   right: 24px;
   width: 40px;
   height: 40px;
@@ -43,6 +118,24 @@
   font-size: 20px;
 }
 
+/* Mobile */
+@media (max-width: 768px) {
+  .task-dashboard {
+    margin-left: 0;
+    width: 100%;
+    padding: 12px 0 0 0;
+  }
+  
+  .task-form-wrapper {
+    padding: 8px;
+    max-height: 95vh;
+  }
+  
+  .task-form-wrapper .task-form-container {
+    border-radius: 12px;
+  }
+}
+
 @media (max-width: 480px) {
   .scroll-to-top-btn {
     bottom: 76px;
@@ -54,13 +147,13 @@
   .scroll-to-top-btn .material-icons {
     font-size: 18px;
   }
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  .task-dashboard {
-    margin-left: 0;
-    width: 100%;
-    padding: 12px 0 0 0;
+  
+  .task-form-wrapper {
+    padding: 4px;
+    max-height: 98vh;
+  }
+  
+  .task-form-wrapper .task-form-container {
+    border-radius: 8px;
   }
 }

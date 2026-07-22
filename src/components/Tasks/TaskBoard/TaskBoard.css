@@ -191,6 +191,27 @@
 }
 
 /* ============================================ */
+/* DRAG OVERLAY HINT */
+/* ============================================ */
+.task-drag-overlay-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(196, 164, 126, 0.15);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--gold-warm);
+  margin-top: 8px;
+  border: 1px dashed var(--gold-soft);
+}
+
+.task-drag-overlay-hint .material-icons {
+  font-size: 18px;
+}
+
+/* ============================================ */
 /* PIN ANIMATION */
 /* ============================================ */
 .task-card-pin {
@@ -302,7 +323,7 @@
 }
 
 /* ============================================ */
-/* CARD CONTENT - MATCHING TASKLIST STYLES */
+/* CARD CONTENT */
 /* ============================================ */
 .task-card-content {
   display: flex;
@@ -346,7 +367,7 @@
   gap: 6px;
 }
 
-/* Priority Dot - Matching TaskList */
+/* Priority Dot */
 .priority-dot {
   width: 8px;
   height: 8px;
@@ -374,7 +395,7 @@
   text-transform: capitalize;
 }
 
-/* Status - Matching TaskList */
+/* Status */
 .task-status {
   display: flex;
   align-items: center;
@@ -396,31 +417,12 @@
 }
 
 /* ============================================ */
-/* EMPTY STATE */
-/* ============================================ */
-.task-board-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  color: var(--grey);
-  gap: 8px;
-  width: 100%;
-}
-
-.task-board-empty .material-icons {
-  font-size: 40px;
-  color: var(--warm-border);
-}
-
-/* ============================================ */
-/* TASK BOARD ACTION BUTTONS */
+/* ACTION BUTTONS */
 /* ============================================ */
 .task-board-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   margin-top: 6px;
   padding-top: 6px;
   border-top: 1px solid rgba(0, 0, 0, 0.04);
@@ -429,15 +431,16 @@
 .task-board-action-btn {
   background: transparent;
   border: none;
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
   transition: all 0.2s ease;
   color: var(--grey);
   font-size: 12px;
+  font-weight: 500;
 }
 
 .task-board-action-btn .material-icons {
@@ -458,25 +461,27 @@
   background: rgba(212, 132, 122, 0.1);
 }
 
-/* Mobile adjustments */
-@media (max-width: 768px) {
-  .task-board-action-btn {
-    padding: 6px 10px;
-  }
-  
-  .task-board-action-btn .material-icons {
-    font-size: 18px;
-  }
+.task-board-action-btn .action-btn-text {
+  font-size: 12px;
 }
 
-@media (max-width: 480px) {
-  .task-board-action-btn {
-    padding: 4px 8px;
-  }
-  
-  .task-board-action-btn .material-icons {
-    font-size: 16px;
-  }
+/* ============================================ */
+/* EMPTY STATE */
+/* ============================================ */
+.task-board-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--grey);
+  gap: 8px;
+  width: 100%;
+}
+
+.task-board-empty .material-icons {
+  font-size: 40px;
+  color: var(--warm-border);
 }
 
 /* ============================================ */
@@ -702,6 +707,10 @@
   .task-board-card.mobile-card .task-card-pin .pin-icon {
     font-size: 18px;
   }
+
+  .task-board-action-btn .action-btn-text {
+    display: none;
+  }
 }
 
 /* ============================================ */
@@ -765,5 +774,9 @@
 
   .task-status .status-icon {
     font-size: 14px;
+  }
+
+  .task-board-action-btn {
+    padding: 4px 6px;
   }
 }

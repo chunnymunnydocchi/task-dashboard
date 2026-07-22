@@ -1,5 +1,6 @@
 // src/components/Tasks/Timeline/Timeline.jsx
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useDroppable } from '@dnd-kit/core';
 import TimelinePhase from './TimelinePhase';
 import './Timeline.css';
 
@@ -15,10 +16,25 @@ const Timeline = ({
   onViewTask,
   onEditTask,
   onDeleteTask,
+  onTaskDrop,
   highlightedTaskId = null,
-  registerTaskRef, // NEW
+  registerTaskRef,
 }) => {
   const [collapsedPhases, setCollapsedPhases] = useState({});
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  // Set up droppable for the entire timeline
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'timeline-drop-zone',
+    data: {
+      type: 'timeline',
+    },
+  });
+
+  useEffect(() => {
+    setIsDragOver(isOver);
+    console.log('isOver:', isOver); // Debug log
+  }, [isOver]);
 
   const groupedTasks = useMemo(() => {
     const groups = PHASES.map(phase => ({
@@ -57,36 +73,43 @@ const Timeline = ({
     }));
   };
 
-  if (totalTimedTasks === 0) {
-    return (
-      <div className="timeline-container">
+  return (
+    <div 
+      ref={setNodeRef}
+      className={`timeline-container ${isDragOver ? 'drag-over' : ''}`}
+    >
+      {/* ============ DROP INDICATOR ============ */}
+      {isDragOver && (
+        <div className="timeline-drop-indicator">
+          <span className="material-icons">add_circle</span>
+          <span>Drop here to move to timeline</span>
+        </div>
+      )}
+
+      {totalTimedTasks === 0 ? (
         <div className="timeline-empty">
           <span className="material-icons">event_note</span>
           <span>No timed tasks for this day</span>
-          <span className="empty-hint">Add a task with a time to see it here</span>
+          <span className="empty-hint">Drag a task from the Task Board to add it here</span>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="timeline-container">
-      <div className="timeline-phases">
-        {groupedTasks.map(phase => (
-          <TimelinePhase
-            key={phase.id}
-            phase={phase}
-            tasks={phase.tasks}
-            onViewTask={onViewTask}
-            onEditTask={onEditTask}
-            onDeleteTask={onDeleteTask}
-            highlightedTaskId={highlightedTaskId}
-            isCollapsed={collapsedPhases[phase.id] || false}
-            onToggleCollapse={handleToggleCollapse}
-            registerTaskRef={registerTaskRef} // NEW
-          />
-        ))}
-      </div>
+      ) : (
+        <div className="timeline-phases">
+          {groupedTasks.map(phase => (
+            <TimelinePhase
+              key={phase.id}
+              phase={phase}
+              tasks={phase.tasks}
+              onViewTask={onViewTask}
+              onEditTask={onEditTask}
+              onDeleteTask={onDeleteTask}
+              highlightedTaskId={highlightedTaskId}
+              isCollapsed={collapsedPhases[phase.id] || false}
+              onToggleCollapse={handleToggleCollapse}
+              registerTaskRef={registerTaskRef}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

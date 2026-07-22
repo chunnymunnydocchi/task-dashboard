@@ -22,10 +22,10 @@ import { CSS } from '@dnd-kit/utilities';
 import './TaskBoard.css';
 
 // Draggable Task Card Component
-const DraggableTaskCard = ({ 
-  task, 
-  isUnpinned, 
-  onPinClick, 
+const DraggableTaskCard = ({
+  task,
+  isUnpinned,
+  onPinClick,
   isMobile,
   isDragDisabled,
   onView,
@@ -40,9 +40,14 @@ const DraggableTaskCard = ({
     transform,
     transition,
     isDragging,
-  } = useSortable({ 
+  } = useSortable({
     id: task.id,
     disabled: isDragDisabled,
+    data: {
+      type: 'task-board-card',
+      task: task,
+      isUnpinned: isUnpinned,
+    },
   });
 
   const style = {
@@ -53,7 +58,7 @@ const DraggableTaskCard = ({
   };
 
   const getPriorityClass = (priority) => {
-    switch(priority) {
+    switch (priority) {
       case 'high': return 'priority-high';
       case 'low': return 'priority-low';
       default: return 'priority-normal';
@@ -61,8 +66,7 @@ const DraggableTaskCard = ({
   };
 
   const handleCardClick = (e) => {
-    // Don't trigger if clicking on buttons
-    if (e.target.closest('.task-card-pin') || 
+    if (e.target.closest('.task-card-pin') ||
         e.target.closest('.task-board-action-btn')) {
       return;
     }
@@ -94,7 +98,7 @@ const DraggableTaskCard = ({
       {...listeners}
       onClick={handleCardClick}
     >
-      <div 
+      <div
         className={`task-card-pin ${isUnpinned ? 'unpinned-state' : ''}`}
         onClick={(e) => {
           e.stopPropagation();
@@ -131,31 +135,33 @@ const DraggableTaskCard = ({
           </span>
         </div>
       </div>
-      {isUnpinned && (
+      
+      {isUnpinned && !isMobile && (
         <div className="task-unpinned-badge">
-          <span className="material-icons">swap_horiz</span>
-          <span>Drag to reorder</span>
+          <span className="material-icons">drag_handle</span>
+          <span>Drag to reorder or to Timeline</span>
         </div>
       )}
-      
-      {/* Action Buttons */}
+
       <div className="task-board-actions">
         {onEdit && (
-          <button 
+          <button
             className="task-board-action-btn edit-btn"
             onClick={handleEditClick}
             aria-label="Edit task"
           >
             <span className="material-icons">edit</span>
+            <span className="action-btn-text">Edit</span>
           </button>
         )}
         {onDelete && (
-          <button 
+          <button
             className="task-board-action-btn delete-btn"
             onClick={handleDeleteClick}
             aria-label="Delete task"
           >
             <span className="material-icons">delete</span>
+            <span className="action-btn-text">Delete</span>
           </button>
         )}
       </div>
@@ -164,13 +170,13 @@ const DraggableTaskCard = ({
 };
 
 // Main TaskBoard Component
-const TaskBoard = ({ 
-  tasks = [], 
-  onViewTask, 
-  onEditTask, 
-  onMoveTask, 
+const TaskBoard = ({
+  tasks = [],
+  onViewTask,
+  onEditTask,
   onDeleteTask,
-  onTasksReorder 
+  onTasksReorder,
+  onTaskMoveToTimeline,  // NEW: Callback when task is moved to timeline
 }) => {
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -178,22 +184,21 @@ const TaskBoard = ({
   const [unpinnedTasks, setUnpinnedTasks] = useState({});
   const [localTasks, setLocalTasks] = useState([]);
   const [activeId, setActiveId] = useState(null);
-  
-  // Store refs for each task card
-  const taskRefs = useRef({});
 
-  // Load tasks from props and localStorage order
+  const taskRefs = useRef({});
+  const boardRef = useRef(null);
+
   useEffect(() => {
     const savedOrder = localStorage.getItem('taskBoardOrder');
     let orderedTasks = [...tasks];
-    
+
     if (savedOrder && tasks.length > 0) {
       try {
         const order = JSON.parse(savedOrder);
         const currentIds = tasks.map(t => t.id);
-        const isValid = order.every(id => currentIds.includes(id)) && 
+        const isValid = order.every(id => currentIds.includes(id)) &&
                        order.length === currentIds.length;
-        
+
         if (isValid) {
           orderedTasks = order.map(id => tasks.find(t => t.id === id)).filter(Boolean);
         }
@@ -201,10 +206,9 @@ const TaskBoard = ({
         console.warn('Failed to parse task order:', e);
       }
     }
-    
+
     setLocalTasks(orderedTasks);
-    
-    // Reset refs when tasks change
+
     taskRefs.current = {};
     orderedTasks.forEach(task => {
       taskRefs.current[task.id] = React.createRef();
@@ -264,31 +268,56 @@ const TaskBoard = ({
 
   const handleDragStart = (event) => {
     const { active } = event;
+    const task = localTasks.find(t => t.id === active.id);
+    
     if (!unpinnedTasks[active.id]) {
       return;
     }
+    
     setActiveId(active.id);
   };
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
+    const draggedTask = localTasks.find(t => t.id === active.id);
+    
     setActiveId(null);
 
-    if (!unpinnedTasks[active.id]) {
+    if (!draggedTask || !unpinnedTasks[active.id]) {
       return;
     }
 
-    if (over && active.id !== over.id) {
+    // Check if the drop was inside the TaskBoard
+    if (over && over.id !== active.id) {
+      // Dropped on another task card → reorder within TaskBoard
       const oldIndex = localTasks.findIndex(task => task.id === active.id);
       const newIndex = localTasks.findIndex(task => task.id === over.id);
-      
-      const newTasks = arrayMove(localTasks, oldIndex, newIndex);
-      setLocalTasks(newTasks);
-      saveOrderToStorage(newTasks);
-      
-      if (onTasksReorder) {
-        onTasksReorder(newTasks);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newTasks = arrayMove(localTasks, oldIndex, newIndex);
+        setLocalTasks(newTasks);
+        saveOrderToStorage(newTasks);
+
+        if (onTasksReorder) {
+          onTasksReorder(newTasks);
+        }
       }
+      return;
+    }
+
+    // If dropped anywhere else (outside TaskBoard), move to timeline
+    console.log('Task dropped outside TaskBoard:', draggedTask.title);
+    
+    // Remove unpinned state
+    setUnpinnedTasks(prev => {
+      const newState = { ...prev };
+      delete newState[active.id];
+      return newState;
+    });
+
+    // Call parent to open MoveTaskModal
+    if (onTaskMoveToTimeline) {
+      onTaskMoveToTimeline(draggedTask);
     }
   };
 
@@ -296,7 +325,6 @@ const TaskBoard = ({
     setActiveId(null);
   };
 
-  // Handle view task with ref
   const handleViewTask = (task) => {
     if (onViewTask) {
       const ref = taskRefs.current[task.id] || null;
@@ -330,12 +358,11 @@ const TaskBoard = ({
             {tasksList.map(task => {
               const isUnpinned = !!unpinnedTasks[task.id];
               const isDragDisabled = !isUnpinned;
-              
-              // Ensure ref exists
+
               if (!taskRefs.current[task.id]) {
                 taskRefs.current[task.id] = React.createRef();
               }
-              
+
               return (
                 <DraggableTaskCard
                   key={task.id}
@@ -371,6 +398,10 @@ const TaskBoard = ({
                 <h4 className="task-card-title">
                   {localTasks.find(t => t.id === activeId)?.title}
                 </h4>
+                <div className="task-drag-overlay-hint">
+                  <span className="material-icons">drag_handle</span>
+                  <span>Drag outside to move to Timeline</span>
+                </div>
               </div>
             </div>
           ) : null}
@@ -382,14 +413,14 @@ const TaskBoard = ({
   // Desktop view
   if (!isMobile) {
     return (
-      <div className="task-board-desktop">
+      <div className="task-board-desktop" ref={boardRef}>
         <div className="task-board-header">
           <div className="task-board-header-left">
             <span className="task-board-icon material-icons">push_pin</span>
             <h3 className="task-board-title">
               Task Board ({localTasks.length} {localTasks.length === 1 ? 'task' : 'tasks'})
             </h3>
-            <button 
+            <button
               className="task-board-info-btn"
               onClick={toggleInfoTip}
               aria-label="How to use Task Board"
@@ -400,7 +431,7 @@ const TaskBoard = ({
           {showInfoTip && (
             <div className="task-board-info-tip">
               <span className="material-icons">info</span>
-              <span>Click the pin to unpin a task, then drag to reorder. Click the close icon to pin it back.</span>
+              <span>Unpin a task, then drag it outside the Task Board to add it to the Timeline.</span>
             </div>
           )}
         </div>
@@ -414,7 +445,7 @@ const TaskBoard = ({
   // Mobile view
   return (
     <>
-      <button 
+      <button
         className="floating-task-board-btn"
         onClick={toggleOverlay}
         aria-label="Open task board"
@@ -426,7 +457,7 @@ const TaskBoard = ({
       </button>
 
       {isOverlayOpen && (
-        <div 
+        <div
           className="task-board-backdrop"
           onClick={closeOverlay}
         />
@@ -441,7 +472,7 @@ const TaskBoard = ({
               <span className="overlay-title">
                 Task Board ({localTasks.length} {localTasks.length === 1 ? 'task' : 'tasks'})
               </span>
-              <button 
+              <button
                 className="task-board-info-btn mobile-info-btn"
                 onClick={toggleInfoTip}
                 aria-label="How to use Task Board"
@@ -449,7 +480,7 @@ const TaskBoard = ({
                 <span className="material-icons">help_outline</span>
               </button>
             </div>
-            <button 
+            <button
               className="overlay-close-btn"
               onClick={closeOverlay}
               aria-label="Close task board"
@@ -460,7 +491,7 @@ const TaskBoard = ({
           {showInfoTip && (
             <div className="task-board-info-tip mobile-tip">
               <span className="material-icons">info</span>
-              <span>Tap pin to unpin, then drag to reorder. Tap close to pin back.</span>
+              <span>Unpin a task, then drag it outside the Task Board to add it to the Timeline.</span>
             </div>
           )}
         </div>
