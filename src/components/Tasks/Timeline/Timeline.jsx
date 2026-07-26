@@ -1,6 +1,6 @@
 // src/components/Tasks/Timeline/Timeline.jsx
-import React, { useMemo, useState, useEffect } from 'react';
-import { useDroppable } from '@dnd-kit/core';
+
+import React, { useMemo, useState } from 'react';
 import TimelinePhase from './TimelinePhase';
 import './Timeline.css';
 
@@ -16,25 +16,10 @@ const Timeline = ({
   onViewTask,
   onEditTask,
   onDeleteTask,
-  onTaskDrop,
   highlightedTaskId = null,
   registerTaskRef,
 }) => {
   const [collapsedPhases, setCollapsedPhases] = useState({});
-  const [isDragOver, setIsDragOver] = useState(false);
-
-  // Set up droppable for the entire timeline
-  const { setNodeRef, isOver } = useDroppable({
-    id: 'timeline-drop-zone',
-    data: {
-      type: 'timeline',
-    },
-  });
-
-  useEffect(() => {
-    setIsDragOver(isOver);
-    console.log('isOver:', isOver); // Debug log
-  }, [isOver]);
 
   const groupedTasks = useMemo(() => {
     const groups = PHASES.map(phase => ({
@@ -74,18 +59,7 @@ const Timeline = ({
   };
 
   return (
-    <div 
-      ref={setNodeRef}
-      className={`timeline-container ${isDragOver ? 'drag-over' : ''}`}
-    >
-      {/* ============ DROP INDICATOR ============ */}
-      {isDragOver && (
-        <div className="timeline-drop-indicator">
-          <span className="material-icons">add_circle</span>
-          <span>Drop here to move to timeline</span>
-        </div>
-      )}
-
+    <div className="timeline-container">
       {totalTimedTasks === 0 ? (
         <div className="timeline-empty">
           <span className="material-icons">event_note</span>

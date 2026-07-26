@@ -1,6 +1,22 @@
-// src/pages/TasksPage.jsx
+// src/pages/TasksPage.jsx - Full file with fixed move to timeline
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  defaultDropAnimationSideEffects,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
 import { useTasksContext } from '../contexts/TasksContext';
 import { useToast } from '../contexts/ToastContext';
 import DateNavigator from '../components/Tasks/DateNavigator';
@@ -10,6 +26,7 @@ import TaskDetailModal from '../components/TaskDetailModal/TaskDetailModal';
 import TaskForm from '../components/TaskForm/TaskForm';
 import ConfirmDialog from '../components/ConfirmDialog/ConfirmDialog';
 import MoveTaskModal from '../components/Tasks/MoveTaskModal/MoveTaskModal';
+import DropOverlay from '../components/Tasks/DropOverlay/DropOverlay';
 import './TasksPage.css';
 
 const TasksPage = () => {
@@ -25,7 +42,6 @@ const TasksPage = () => {
     restoreDeletedTask,
   } = useTasksContext();
 
-  // Date state
   const [selectedDate, setSelectedDate] = useState(() => {
     const params = new URLSearchParams(location.search);
     const dateParam = params.get('date');
@@ -40,10 +56,13 @@ const TasksPage = () => {
 
   const [highlightedTaskId, setHighlightedTaskId] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showDropZone, setShowDropZone] = useState(false);
+  const [activeId, setActiveId] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [orderedUntimedTasks, setOrderedUntimedTasks] = useState([]);
 
-  // Form states
   const [showAddForm, setShowAddForm] = useState(false);
-  const [addFormMode, setAddFormMode] = useState('quick'); // 'quick' or 'manual'
+  const [addFormMode, setAddFormMode] = useState('quick');
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [taskToMove, setTaskToMove] = useState(null);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -51,49 +70,106 @@ const TasksPage = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
-  // Detail Modal states
   const [selectedTask, setSelectedTask] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // Delete states
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-  // Drag-Drop states for TaskBoard → Timeline
-  const [isDraggingFromBoard, setIsDraggingFromBoard] = useState(false);
-  const [draggedTask, setDraggedTask] = useState(null);
-
-  // Store refs for tasks
   const taskRefs = useRef({});
   const viewMoreTaskIdRef = useRef(null);
   const isViewMoreOpenRef = useRef(false);
+  const isInitialLoadRef = useRef(true);
+  const prevUntimedTasksRef = useRef([]);
 
-  // Get tasks for current date
   const tasksForDate = getTasksForDate(selectedDate);
   const timedTasks = tasksForDate.filter(t => t.timeSchedule?.start);
   const untimedTasks = tasksForDate.filter(t => !t.timeSchedule?.start);
 
-  // ============ HANDLE SIDEBAR ADD TASK ============
+  // Load saved order from localStorage - ONLY on initial load or when untimedTasks changes
+  useEffect(() => {
+    if (untimedTasks.length === 0) {
+      if (orderedUntimedTasks.length > 0) {
+        setOrderedUntimedTasks([]);
+      }
+      prevUntimedTasksRef.current = [];
+      return;
+    }
+
+    const currentIds = untimedTasks.map(t => t.id).sort().join(',');
+    const prevIds = prevUntimedTasksRef.current.map(t => t.id).sort().join(',');
+
+    if (currentIds === prevIds && !isInitialLoadRef.current) {
+      return;
+    }
+
+    prevUntimedTasksRef.current = [...untimedTasks];
+    isInitialLoadRef.current = false;
+
+    const savedOrder = localStorage.getItem('taskBoardOrder');
+    let orderedTasks = [...untimedTasks];
+
+    if (savedOrder && untimedTasks.length > 0) {
+      try {
+        const order = JSON.parse(savedOrder);
+        const currentIds = untimedTasks.map(t => t.id);
+        const isValid = order.every(id => currentIds.includes(id)) &&
+                       order.length === currentIds.length;
+
+        if (isValid) {
+          orderedTasks = order.map(id => untimedTasks.find(t => t.id === id)).filter(Boolean);
+        }
+      } catch (e) {
+        console.warn('Failed to parse task order:', e);
+      }
+    }
+
+    const currentOrderedIds = orderedUntimedTasks.map(t => t.id).sort().join(',');
+    const newOrderedIds = orderedTasks.map(t => t.id).sort().join(',');
+
+    if (currentOrderedIds !== newOrderedIds) {
+      setOrderedUntimedTasks(orderedTasks);
+    }
+  }, [untimedTasks, orderedUntimedTasks]);
+
+  // Detect mobile
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+        delay: 100,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   useEffect(() => {
     const state = location.state;
     if (state?.mode === 'manual') {
-      // Open the form in manual mode (for sidebar)
       setEditingTask(null);
       setAddFormMode('manual');
       setShowAddForm(true);
       setHasUnsavedChanges(false);
-      // Clear the state so it doesn't reopen on refresh
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, navigate]);
 
-  // ============ VIEW MORE FROM CALENDAR ============
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const taskId = params.get('taskId');
 
     if (!taskId) {
-      // If modal is open from View More and taskId is removed, close it
       if (isViewMoreOpenRef.current) {
         setShowDetailModal(false);
         setSelectedTask(null);
@@ -104,7 +180,6 @@ const TasksPage = () => {
       return;
     }
 
-    // Skip if already processing this task
     if (viewMoreTaskIdRef.current === taskId && isViewMoreOpenRef.current) {
       return;
     }
@@ -117,14 +192,10 @@ const TasksPage = () => {
       isViewMoreOpenRef.current = true;
       setHighlightedTaskId(taskId);
 
-      // Try to get the ref
       const ref = taskRefs.current[taskId] || null;
-
-      // Open modal
       setSelectedTask({ ...task, anchorRef: ref });
       setShowDetailModal(true);
 
-      // If ref wasn't available, try to find it after render
       if (!ref) {
         setTimeout(() => {
           const foundRef = taskRefs.current[taskId];
@@ -137,7 +208,6 @@ const TasksPage = () => {
         }, 100);
       }
     } else {
-      // Task not found - clear URL
       console.warn('Task not found for View More:', taskId);
       const newParams = new URLSearchParams(location.search);
       newParams.delete('taskId');
@@ -145,7 +215,6 @@ const TasksPage = () => {
     }
   }, [location.search, selectedDate, getTasksForDate, navigate]);
 
-  // ============ SCROLL TO TOP ============
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY || window.pageYOffset;
@@ -156,7 +225,6 @@ const TasksPage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // ============ REMOVE PADDING ============
   useEffect(() => {
     const mainContent = document.querySelector('.main-content');
     if (mainContent) {
@@ -170,7 +238,6 @@ const TasksPage = () => {
     };
   }, []);
 
-  // ============ BEFOREUNLOAD PROTECTION ============
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (hasUnsavedChanges) {
@@ -193,18 +260,13 @@ const TasksPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // ============ HANDLERS ============
-
-  // Register task refs from Timeline
   const registerTaskRef = useCallback((taskId, ref) => {
     if (taskId && ref) {
       taskRefs.current[taskId] = ref;
     }
   }, []);
 
-  // View Task - Opens Detail Modal
   const handleViewTask = useCallback((task, elementRef) => {
-    // Clear View More state
     viewMoreTaskIdRef.current = null;
     isViewMoreOpenRef.current = false;
 
@@ -214,7 +276,6 @@ const TasksPage = () => {
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     }
 
-    // Store the ref
     if (task.id && elementRef) {
       taskRefs.current[task.id] = elementRef;
     }
@@ -223,7 +284,6 @@ const TasksPage = () => {
     setShowDetailModal(true);
   }, [location, navigate]);
 
-  // Edit Task
   const handleEditTask = useCallback((task) => {
     setEditingTask(task);
     setShowEditForm(true);
@@ -239,74 +299,68 @@ const TasksPage = () => {
     }
   }, [location, navigate]);
 
-  // ============ MOVE TASK HANDLERS ============
   const handleMoveTask = useCallback((task) => {
     setTaskToMove(task);
     setShowMoveModal(true);
   }, []);
 
+  // ============ FIXED: handleSaveMove ============
   const handleSaveMove = useCallback((timeData) => {
-    if (taskToMove) {
-      const dateKey = taskToMove.date || new Date(taskToMove.createdAt).toISOString().split('T')[0];
-
-      const updatedTask = {
-        ...taskToMove,
-        timeSchedule: {
-          start: timeData.start,
-          end: timeData.end || ''
-        }
-      };
-
-      const success = updateTask(new Date(dateKey), taskToMove.id, updatedTask);
-
-      if (success) {
-        showToast(`Task moved to timeline: "${taskToMove.title}"`, 'success', { duration: 3000 });
-        setShowMoveModal(false);
-        setTaskToMove(null);
-        // Clear drag state if any
-        setIsDraggingFromBoard(false);
-        setDraggedTask(null);
-      } else {
-        showToast('Failed to move task. Please try again.', 'error', { duration: 5000 });
-      }
+    if (!taskToMove) {
+      showToast('No task selected to move.', 'error', { duration: 3000 });
+      return;
     }
-  }, [taskToMove, updateTask, showToast]);
+
+    // Get the date from the task or use the selected date
+    const taskDate = taskToMove.date || format(selectedDate, 'yyyy-MM-dd');
+    const dateObj = new Date(taskDate);
+    
+    // Make a copy of the task and add timeSchedule
+    const updatedTask = {
+      ...taskToMove,
+      timeSchedule: {
+        start: timeData.start,
+        end: timeData.end || ''
+      }
+    };
+
+    // Log for debugging
+    console.log('Moving task:', {
+      taskId: taskToMove.id,
+      taskTitle: taskToMove.title,
+      dateKey: taskDate,
+      updatedTask: updatedTask
+    });
+
+    // Update the task in the context
+    const success = updateTask(dateObj, taskToMove.id, updatedTask);
+
+    if (success) {
+      showToast(`Task moved to timeline: "${taskToMove.title}"`, 'success', { duration: 3000 });
+      setShowMoveModal(false);
+      setTaskToMove(null);
+      setShowDropZone(false);
+      setActiveId(null);
+      
+      // Clear localStorage order since task was removed
+      localStorage.removeItem('taskBoardOrder');
+    } else {
+      console.error('Failed to move task:', {
+        taskId: taskToMove.id,
+        dateKey: taskDate,
+        task: taskToMove
+      });
+      showToast('Failed to move task. Please try again.', 'error', { duration: 5000 });
+    }
+  }, [taskToMove, updateTask, showToast, selectedDate]);
 
   const handleCloseMove = useCallback(() => {
     setShowMoveModal(false);
     setTaskToMove(null);
-    setIsDraggingFromBoard(false);
-    setDraggedTask(null);
+    setShowDropZone(false);
+    setActiveId(null);
   }, []);
 
-  // ============ HANDLE TASK MOVE FROM BOARD ============
-  const handleTaskMoveFromBoard = useCallback((task) => {
-    setTaskToMove(task);
-    setShowMoveModal(true);
-  }, []);
-
-  // ============ DRAG-DROP HANDLERS (TaskBoard → Timeline) ============
-  const handleBoardDragStart = useCallback((task) => {
-    setIsDraggingFromBoard(true);
-    setDraggedTask(task);
-  }, []);
-
-  const handleBoardDragEnd = useCallback(() => {
-    setIsDraggingFromBoard(false);
-    setDraggedTask(null);
-  }, []);
-
-  const handleTaskDrop = useCallback((task) => {
-    // When a task is dropped on the timeline
-    if (task) {
-      setTaskToMove(task);
-      setShowMoveModal(true);
-    }
-    setIsDraggingFromBoard(false);
-    setDraggedTask(null);
-  }, []);
-
-  // ============ CLOSE DETAIL MODAL ============
   const handleCloseDetail = useCallback(() => {
     setShowDetailModal(false);
     setSelectedTask(null);
@@ -321,7 +375,6 @@ const TasksPage = () => {
     }
   }, [location, navigate]);
 
-  // ============ DELETE TASK ============
   const handleDeleteTask = useCallback((taskId) => {
     const task = tasksForDate.find(t => t.id === taskId);
     if (task) {
@@ -370,7 +423,6 @@ const TasksPage = () => {
     setTaskToDelete(null);
   }, []);
 
-  // ============ ADD TASK ============
   const handleAddTask = useCallback(() => {
     setEditingTask(null);
     setAddFormMode('quick');
@@ -395,7 +447,6 @@ const TasksPage = () => {
     }
   }, [selectedDate, addTask, showToast, addFormMode]);
 
-  // ============ EDIT TASK ============
   const handleSaveEditTask = useCallback((taskData) => {
     if (editingTask) {
       const dateKey = editingTask.date || new Date(editingTask.createdAt).toISOString().split('T')[0];
@@ -417,7 +468,6 @@ const TasksPage = () => {
     }
   }, [editingTask, selectedDate, updateTask, getTasksForDate, showToast]);
 
-  // ============ DISCARD CHANGES ============
   const handleDiscard = useCallback(() => {
     if (hasUnsavedChanges) {
       setShowDiscardConfirm(true);
@@ -447,7 +497,6 @@ const TasksPage = () => {
     setHasUnsavedChanges(hasChanges);
   }, []);
 
-  // ============ CLOSE FORM ============
   const closeForm = useCallback(() => {
     if (hasUnsavedChanges) {
       setShowDiscardConfirm(true);
@@ -460,7 +509,65 @@ const TasksPage = () => {
     }
   }, [hasUnsavedChanges]);
 
-  // ============ RENDER ============
+  // ============ DRAG HANDLERS ============
+  
+  const handleDragStart = (event) => {
+    const { active } = event;
+    const task = orderedUntimedTasks.find(t => t.id === active.id);
+    
+    if (task) {
+      setActiveId(active.id);
+      setShowDropZone(true);
+    }
+  };
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    
+    const draggedTask = orderedUntimedTasks.find(t => t.id === active.id);
+    
+    if (!draggedTask) {
+      setActiveId(null);
+      setShowDropZone(false);
+      return;
+    }
+
+    // Case 1: Dropped on the timeline drop zone -> Move to timeline
+    if (over?.data?.current?.type === 'timeline') {
+      setTaskToMove(draggedTask);
+      setShowMoveModal(true);
+      setActiveId(null);
+      setShowDropZone(false);
+      return;
+    }
+
+    // Case 2: Dropped on another task card -> Reorder
+    if (over && over.id !== active.id) {
+      const overData = over.data?.current;
+      if (overData?.type === 'task-board-card') {
+        const oldIndex = orderedUntimedTasks.findIndex(t => t.id === active.id);
+        const newIndex = orderedUntimedTasks.findIndex(t => t.id === over.id);
+        
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const reorderedTasks = arrayMove(orderedUntimedTasks, oldIndex, newIndex);
+          setOrderedUntimedTasks(reorderedTasks);
+          
+          const order = reorderedTasks.map(t => t.id);
+          localStorage.setItem('taskBoardOrder', JSON.stringify(order));
+        }
+      }
+    }
+
+    setActiveId(null);
+    setShowDropZone(false);
+  };
+
+  const handleDragCancel = () => {
+    setActiveId(null);
+    setShowDropZone(false);
+  };
+
+  const activeTask = orderedUntimedTasks.find(t => t.id === activeId);
 
   return (
     <div className="task-dashboard">
@@ -472,38 +579,72 @@ const TasksPage = () => {
         onAddTask={handleAddTask}
       />
 
-      <Timeline
-        tasks={timedTasks}
-        highlightedTaskId={highlightedTaskId}
-        onViewTask={handleViewTask}
-        onEditTask={handleEditTask}
-        onDeleteTask={handleDeleteTask}
-        onTaskDrop={handleTaskDrop}
-        registerTaskRef={registerTaskRef}
-      />
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <div className="task-dashboard-content">
+          <div className="timeline-wrapper">
+            <DropOverlay 
+              isVisible={showDropZone}
+              isOver={false}
+              isMobile={false}
+              position="timeline"
+            />
+            <Timeline
+              tasks={timedTasks}
+              highlightedTaskId={highlightedTaskId}
+              onViewTask={handleViewTask}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTask}
+              registerTaskRef={registerTaskRef}
+            />
+          </div>
 
-      <TaskBoard
-        tasks={untimedTasks}
-        onViewTask={handleViewTask}
-        onEditTask={handleEditTask}
-        onMoveTask={handleMoveTask}
-        onDeleteTask={handleDeleteTask}
-        onDragStart={handleBoardDragStart}
-        onTaskMoveToTimeline={handleTaskMoveFromBoard}
-        onDragEnd={handleBoardDragEnd}
-      />
+          <TaskBoard
+            tasks={orderedUntimedTasks}
+            onViewTask={handleViewTask}
+            onEditTask={handleEditTask}
+            onDeleteTask={handleDeleteTask}
+            showDropZone={showDropZone}
+            isMobile={isMobile}
+          />
+        </div>
+
+        <DragOverlay
+          dropAnimation={{
+            sideEffects: defaultDropAnimationSideEffects({
+              styles: {
+                active: {
+                  opacity: '0.4',
+                },
+              },
+            }),
+          }}
+        >
+          {activeTask ? (
+            <div className="task-board-card dragging-overlay">
+              <div className="task-card-content">
+                <h4 className="task-card-title">{activeTask.title}</h4>
+                <div className="task-drag-overlay-hint">
+                  <span className="material-icons">drag_handle</span>
+                  <span>Drop on the timeline to add time</span>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {showScrollTop && (
-        <button
-          className="scroll-to-top-btn"
-          onClick={scrollToTop}
-          aria-label="Scroll to top"
-        >
+        <button className="scroll-to-top-btn" onClick={scrollToTop}>
           <span className="material-icons">arrow_upward</span>
         </button>
       )}
 
-      {/* ============ TASK FORM OVERLAY ============ */}
       {(showAddForm || showEditForm) && (
         <div className="task-form-overlay">
           <div className="task-form-backdrop" onClick={closeForm} />

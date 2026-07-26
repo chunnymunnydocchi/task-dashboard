@@ -1,27 +1,16 @@
 // src/components/Tasks/TaskBoard/TaskBoard.jsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragOverlay,
-  defaultDropAnimationSideEffects,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
   horizontalListSortingStrategy,
+  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import DropOverlay from '../DropOverlay/DropOverlay';
 import './TaskBoard.css';
 
-// Draggable Task Card Component
 const DraggableTaskCard = ({
   task,
   isUnpinned,
@@ -31,7 +20,6 @@ const DraggableTaskCard = ({
   onView,
   onEdit,
   onDelete,
-  cardRef,
 }) => {
   const {
     attributes,
@@ -111,9 +99,7 @@ const DraggableTaskCard = ({
         <span className="material-icons pin-icon">
           {isUnpinned ? 'close' : 'push_pin'}
         </span>
-        {isUnpinned && (
-          <span className="pin-ripple" />
-        )}
+        {isUnpinned && <span className="pin-ripple" />}
       </div>
       <div className="task-card-content">
         <h4 className="task-card-title">{task.title}</h4>
@@ -135,7 +121,7 @@ const DraggableTaskCard = ({
           </span>
         </div>
       </div>
-      
+
       {isUnpinned && !isMobile && (
         <div className="task-unpinned-badge">
           <span className="material-icons">drag_handle</span>
@@ -145,21 +131,13 @@ const DraggableTaskCard = ({
 
       <div className="task-board-actions">
         {onEdit && (
-          <button
-            className="task-board-action-btn edit-btn"
-            onClick={handleEditClick}
-            aria-label="Edit task"
-          >
+          <button className="task-board-action-btn edit-btn" onClick={handleEditClick}>
             <span className="material-icons">edit</span>
             <span className="action-btn-text">Edit</span>
           </button>
         )}
         {onDelete && (
-          <button
-            className="task-board-action-btn delete-btn"
-            onClick={handleDeleteClick}
-            aria-label="Delete task"
-          >
+          <button className="task-board-action-btn delete-btn" onClick={handleDeleteClick}>
             <span className="material-icons">delete</span>
             <span className="action-btn-text">Delete</span>
           </button>
@@ -169,74 +147,20 @@ const DraggableTaskCard = ({
   );
 };
 
-// Main TaskBoard Component
 const TaskBoard = ({
   tasks = [],
   onViewTask,
   onEditTask,
   onDeleteTask,
-  onTasksReorder,
-  onTaskMoveToTimeline,  // NEW: Callback when task is moved to timeline
+  onReorder,
+  showDropZone = false,
+  isMobile = false,
 }) => {
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showInfoTip, setShowInfoTip] = useState(false);
   const [unpinnedTasks, setUnpinnedTasks] = useState({});
-  const [localTasks, setLocalTasks] = useState([]);
-  const [activeId, setActiveId] = useState(null);
 
-  const taskRefs = useRef({});
-  const boardRef = useRef(null);
-
-  useEffect(() => {
-    const savedOrder = localStorage.getItem('taskBoardOrder');
-    let orderedTasks = [...tasks];
-
-    if (savedOrder && tasks.length > 0) {
-      try {
-        const order = JSON.parse(savedOrder);
-        const currentIds = tasks.map(t => t.id);
-        const isValid = order.every(id => currentIds.includes(id)) &&
-                       order.length === currentIds.length;
-
-        if (isValid) {
-          orderedTasks = order.map(id => tasks.find(t => t.id === id)).filter(Boolean);
-        }
-      } catch (e) {
-        console.warn('Failed to parse task order:', e);
-      }
-    }
-
-    setLocalTasks(orderedTasks);
-
-    taskRefs.current = {};
-    orderedTasks.forEach(task => {
-      taskRefs.current[task.id] = React.createRef();
-    });
-  }, [tasks]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-        delay: 100,
-        tolerance: 5,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const incompleteTasks = localTasks.filter(task => !task.completed);
+  const incompleteTasks = tasks.filter(task => !task.completed);
   const taskCount = incompleteTasks.length;
 
   const toggleOverlay = () => {
@@ -261,74 +185,9 @@ const TaskBoard = ({
     });
   };
 
-  const saveOrderToStorage = (orderedTasks) => {
-    const order = orderedTasks.map(t => t.id);
-    localStorage.setItem('taskBoardOrder', JSON.stringify(order));
-  };
-
-  const handleDragStart = (event) => {
-    const { active } = event;
-    const task = localTasks.find(t => t.id === active.id);
-    
-    if (!unpinnedTasks[active.id]) {
-      return;
-    }
-    
-    setActiveId(active.id);
-  };
-
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    const draggedTask = localTasks.find(t => t.id === active.id);
-    
-    setActiveId(null);
-
-    if (!draggedTask || !unpinnedTasks[active.id]) {
-      return;
-    }
-
-    // Check if the drop was inside the TaskBoard
-    if (over && over.id !== active.id) {
-      // Dropped on another task card → reorder within TaskBoard
-      const oldIndex = localTasks.findIndex(task => task.id === active.id);
-      const newIndex = localTasks.findIndex(task => task.id === over.id);
-
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newTasks = arrayMove(localTasks, oldIndex, newIndex);
-        setLocalTasks(newTasks);
-        saveOrderToStorage(newTasks);
-
-        if (onTasksReorder) {
-          onTasksReorder(newTasks);
-        }
-      }
-      return;
-    }
-
-    // If dropped anywhere else (outside TaskBoard), move to timeline
-    console.log('Task dropped outside TaskBoard:', draggedTask.title);
-    
-    // Remove unpinned state
-    setUnpinnedTasks(prev => {
-      const newState = { ...prev };
-      delete newState[active.id];
-      return newState;
-    });
-
-    // Call parent to open MoveTaskModal
-    if (onTaskMoveToTimeline) {
-      onTaskMoveToTimeline(draggedTask);
-    }
-  };
-
-  const handleDragCancel = () => {
-    setActiveId(null);
-  };
-
   const handleViewTask = (task) => {
     if (onViewTask) {
-      const ref = taskRefs.current[task.id] || null;
-      onViewTask(task, ref);
+      onViewTask(task);
     }
   };
 
@@ -343,82 +202,43 @@ const TaskBoard = ({
     }
 
     return (
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragCancel={handleDragCancel}
+      <SortableContext
+        items={tasksList.map(t => t.id)}
+        strategy={isMobileView ? verticalListSortingStrategy : horizontalListSortingStrategy}
       >
-        <SortableContext
-          items={tasksList.map(t => t.id)}
-          strategy={isMobileView ? verticalListSortingStrategy : horizontalListSortingStrategy}
-        >
-          <div className={`task-board-cards ${isMobileView ? 'vertical' : 'horizontal'}`}>
-            {tasksList.map(task => {
-              const isUnpinned = !!unpinnedTasks[task.id];
-              const isDragDisabled = !isUnpinned;
+        <div className={`task-board-cards ${isMobileView ? 'vertical' : 'horizontal'}`}>
+          {tasksList.map(task => {
+            const isUnpinned = !!unpinnedTasks[task.id];
+            const isDragDisabled = !isUnpinned;
 
-              if (!taskRefs.current[task.id]) {
-                taskRefs.current[task.id] = React.createRef();
-              }
-
-              return (
-                <DraggableTaskCard
-                  key={task.id}
-                  ref={taskRefs.current[task.id]}
-                  task={task}
-                  isUnpinned={isUnpinned}
-                  onPinClick={handlePinClick}
-                  isMobile={isMobileView}
-                  isDragDisabled={isDragDisabled}
-                  onView={() => handleViewTask(task)}
-                  onEdit={onEditTask}
-                  onDelete={onDeleteTask}
-                  cardRef={taskRefs.current[task.id]}
-                />
-              );
-            })}
-          </div>
-        </SortableContext>
-        <DragOverlay
-          dropAnimation={{
-            sideEffects: defaultDropAnimationSideEffects({
-              styles: {
-                active: {
-                  opacity: '0.4',
-                },
-              },
-            }),
-          }}
-        >
-          {activeId ? (
-            <div className="task-board-card dragging-overlay">
-              <div className="task-card-content">
-                <h4 className="task-card-title">
-                  {localTasks.find(t => t.id === activeId)?.title}
-                </h4>
-                <div className="task-drag-overlay-hint">
-                  <span className="material-icons">drag_handle</span>
-                  <span>Drag outside to move to Timeline</span>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+            return (
+              <DraggableTaskCard
+                key={task.id}
+                task={task}
+                isUnpinned={isUnpinned}
+                onPinClick={handlePinClick}
+                isMobile={isMobileView}
+                isDragDisabled={isDragDisabled}
+                onView={() => handleViewTask(task)}
+                onEdit={onEditTask}
+                onDelete={onDeleteTask}
+              />
+            );
+          })}
+        </div>
+      </SortableContext>
     );
   };
 
   // Desktop view
   if (!isMobile) {
     return (
-      <div className="task-board-desktop" ref={boardRef}>
+      <div className="task-board-desktop">
         <div className="task-board-header">
           <div className="task-board-header-left">
             <span className="task-board-icon material-icons">push_pin</span>
             <h3 className="task-board-title">
-              Task Board ({localTasks.length} {localTasks.length === 1 ? 'task' : 'tasks'})
+              Task Board ({tasks.length} {tasks.length === 1 ? 'task' : 'tasks'})
             </h3>
             <button
               className="task-board-info-btn"
@@ -436,7 +256,7 @@ const TaskBoard = ({
           )}
         </div>
         <div className="task-board-scroll">
-          {renderTaskList(localTasks, false)}
+          {renderTaskList(tasks, false)}
         </div>
       </div>
     );
@@ -457,20 +277,26 @@ const TaskBoard = ({
       </button>
 
       {isOverlayOpen && (
-        <div
-          className="task-board-backdrop"
-          onClick={closeOverlay}
-        />
+        <div className="task-board-backdrop" onClick={closeOverlay} />
       )}
 
       <div className={`task-board-overlay ${isOverlayOpen ? 'open' : ''}`}>
+        {showDropZone && (
+          <DropOverlay 
+            isVisible={true}
+            isOver={false}
+            isMobile={true}
+            position="taskboard"
+          />
+        )}
+
         <div className="task-board-overlay-header">
           <div className="overlay-drag-handle" />
           <div className="overlay-header-content">
             <div className="overlay-header-left">
               <span className="overlay-icon material-icons">push_pin</span>
               <span className="overlay-title">
-                Task Board ({localTasks.length} {localTasks.length === 1 ? 'task' : 'tasks'})
+                Task Board ({tasks.length} {tasks.length === 1 ? 'task' : 'tasks'})
               </span>
               <button
                 className="task-board-info-btn mobile-info-btn"
@@ -491,13 +317,13 @@ const TaskBoard = ({
           {showInfoTip && (
             <div className="task-board-info-tip mobile-tip">
               <span className="material-icons">info</span>
-              <span>Unpin a task, then drag it outside the Task Board to add it to the Timeline.</span>
+              <span>Unpin a task, then drag it above to add it to the Timeline.</span>
             </div>
           )}
         </div>
 
         <div className="task-board-overlay-body">
-          {renderTaskList(localTasks, true)}
+          {renderTaskList(tasks, true)}
         </div>
       </div>
     </>

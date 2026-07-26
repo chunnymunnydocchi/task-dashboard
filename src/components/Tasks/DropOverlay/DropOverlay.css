@@ -1,0 +1,226 @@
+/* src/components/Tasks/DropOverlay/DropOverlay.css */
+
+.drop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.85);
+  border: 3px dashed var(--gold-soft);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.drop-overlay.drag-over {
+  background: rgba(196, 164, 126, 0.12);
+  border-color: var(--gold-warm);
+  border-width: 3px;
+}
+
+.drop-overlay-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 32px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  pointer-events: none;
+}
+
+.drop-overlay.drag-over .drop-overlay-content {
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(196, 164, 126, 0.15);
+}
+
+.drop-overlay-icon {
+  font-size: 32px;
+  color: var(--gold-soft);
+  transition: color 0.2s ease;
+}
+
+.drop-overlay.drag-over .drop-overlay-icon {
+  color: var(--gold-warm);
+}
+
+.drop-overlay-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drop-overlay-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--cynical-black);
+}
+
+.drop-overlay.drag-over .drop-overlay-title {
+  color: var(--gold-warm);
+}
+
+.drop-overlay-subtitle {
+  font-size: 13px;
+  color: var(--iron-fixture);
+}
+
+/* ============================================ */
+/* MOBILE - Positioned at top of TaskBoard overlay */
+/* ============================================ */
+.drop-overlay.mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 250;
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.90);
+  border-width: 4px;
+}
+
+.drop-overlay.mobile.drag-over {
+  background: rgba(196, 164, 126, 0.15);
+}
+
+.drop-overlay.mobile .drop-overlay-content {
+  padding: 24px 32px;
+  flex-direction: column;
+  text-align: center;
+  max-width: 85%;
+}
+
+.drop-overlay.mobile .drop-overlay-icon {
+  font-size: 40px;
+}
+
+.drop-overlay.mobile .drop-overlay-title {
+  font-size: 18px;
+}
+
+.drop-overlay.mobile .drop-overlay-subtitle {
+  font-size: 14px;
+}
+
+/* ============================================ */
+/* TASKBOARD POSITION - Overlay at top of taskboard overlay */
+/* ============================================ */
+.drop-overlay.taskboard-position {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 260;
+  border-radius: 16px 16px 0 0;
+  background: rgba(255, 255, 255, 0.92);
+  border-width: 3px;
+  border-color: var(--gold-soft);
+}
+
+.drop-overlay.taskboard-position .drop-overlay-content {
+  padding: 16px 24px;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.drop-overlay.taskboard-position .drop-overlay-icon {
+  font-size: 28px;
+}
+
+.drop-overlay.taskboard-position .drop-overlay-title {
+  font-size: 15px;
+}
+
+.drop-overlay.taskboard-position .drop-overlay-subtitle {
+  font-size: 12px;
+}
+
+/* ============================================ */
+/* DESKTOP RESPONSIVE */
+/* ============================================ */
+@media (max-width: 768px) {
+  .drop-overlay-content {
+    padding: 16px 20px;
+    gap: 12px;
+    flex-direction: column;
+    text-align: center;
+    max-width: 80%;
+  }
+
+  .drop-overlay-icon {
+    font-size: 28px;
+  }
+
+  .drop-overlay-title {
+    font-size: 15px;
+  }
+
+  .drop-overlay-subtitle {
+    font-size: 12px;
+  }
+
+  .drop-overlay.taskboard-position .drop-overlay-content {
+    flex-direction: column;
+    padding: 14px 20px;
+    max-width: 90%;
+  }
+
+  .drop-overlay.taskboard-position .drop-overlay-icon {
+    font-size: 24px;
+  }
+
+  .drop-overlay.taskboard-position .drop-overlay-title {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .drop-overlay-content {
+    padding: 12px 16px;
+    gap: 8px;
+  }
+
+  .drop-overlay-icon {
+    font-size: 24px;
+  }
+
+  .drop-overlay-title {
+    font-size: 14px;
+  }
+
+  .drop-overlay-subtitle {
+    font-size: 11px;
+  }
+
+  .drop-overlay.mobile .drop-overlay-content {
+    padding: 20px 24px;
+    max-width: 90%;
+  }
+
+  .drop-overlay.mobile .drop-overlay-icon {
+    font-size: 32px;
+  }
+
+  .drop-overlay.mobile .drop-overlay-title {
+    font-size: 16px;
+  }
+
+  .drop-overlay.taskboard-position .drop-overlay-content {
+    padding: 12px 16px;
+  }
+
+  .drop-overlay.taskboard-position .drop-overlay-icon {
+    font-size: 20px;
+  }
+
+  .drop-overlay.taskboard-position .drop-overlay-title {
+    font-size: 13px;
+  }
+}

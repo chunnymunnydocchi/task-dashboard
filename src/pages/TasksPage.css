@@ -7,6 +7,50 @@
   width: 100%;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.task-dashboard-content {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+  gap: 0;
+}
+
+/* Timeline wrapper - DropOverlay only covers this area */
+.timeline-wrapper {
+  position: relative;
+  flex: 1;
+  min-height: 200px;
+}
+
+/* DropOverlay positioned within timeline wrapper only */
+.timeline-wrapper .drop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+}
+
+/* Timeline content */
+.timeline-wrapper .timeline-container {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  min-height: 200px;
+}
+
+/* TaskBoard stays at bottom, NOT covered */
+.task-dashboard-content .task-board-desktop {
+  margin-top: 2px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  background: white;
 }
 
 /* ============ TASK FORM OVERLAY ============ */
@@ -46,7 +90,6 @@
   padding: 16px;
 }
 
-/* Override TaskForm styles to work in overlay */
 .task-form-wrapper .task-form-modal {
   position: relative;
   background: transparent;
@@ -60,10 +103,9 @@
 }
 
 .task-form-wrapper .task-form-backdrop {
-  display: none; /* Hide the internal backdrop */
+  display: none;
 }
 
-/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -84,7 +126,6 @@
   }
 }
 
-/* Scroll to Top Button */
 .scroll-to-top-btn {
   position: fixed;
   bottom: 90px;
@@ -118,12 +159,15 @@
   font-size: 20px;
 }
 
-/* Mobile */
 @media (max-width: 768px) {
   .task-dashboard {
     margin-left: 0;
     width: 100%;
     padding: 12px 0 0 0;
+  }
+
+  .task-dashboard-content .task-board-desktop {
+    display: none;
   }
   
   .task-form-wrapper {
@@ -133,6 +177,14 @@
   
   .task-form-wrapper .task-form-container {
     border-radius: 12px;
+  }
+
+  .task-dashboard-content {
+    min-height: 300px;
+  }
+
+  .timeline-wrapper {
+    min-height: 150px;
   }
 }
 
