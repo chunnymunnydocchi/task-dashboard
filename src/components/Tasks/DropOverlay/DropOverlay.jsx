@@ -20,7 +20,7 @@ const DropOverlay = ({
 
   if (!isVisible) return null;
 
-  const overlayClass = `drop-overlay ${(isOver || isDroppableOver) ? 'drag-over' : ''} ${isMobile ? 'mobile' : ''} ${position === 'taskboard' ? 'taskboard-position' : ''}`;
+  const overlayClass = `drop-overlay ${(isOver || isDroppableOver) ? 'drag-over' : ''} ${isMobile ? 'mobile' : ''} ${position === 'taskboard' ? 'taskboard-position' : ''} ${isVisible ? 'visible' : ''}`;
 
   return (
     <div 
@@ -28,12 +28,14 @@ const DropOverlay = ({
       className={overlayClass}
     >
       <div className="drop-overlay-content">
-        <span className="material-icons drop-overlay-icon">arrow_upward</span>
+        <span className="material-icons drop-overlay-icon">⬆</span>
         <div className="drop-overlay-text">
           <span className="drop-overlay-title">Drag Here to Move to Timeline</span>
           <span className="drop-overlay-subtitle">Release to set a time for this task</span>
         </div>
       </div>
+      {/* Arrow indicator pointing down to the cards */}
+      <div className="drop-arrow-indicator" />
     </div>
   );
 };

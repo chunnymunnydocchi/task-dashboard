@@ -280,7 +280,8 @@ const TaskBoard = ({
         <div className="task-board-backdrop" onClick={closeOverlay} />
       )}
 
-      <div className={`task-board-overlay ${isOverlayOpen ? 'open' : ''}`}>
+      <div className={`task-board-overlay ${isOverlayOpen ? 'open' : ''} ${showDropZone ? 'has-drop-zone' : ''}`}>
+        {/* Drop zone at the top of the overlay */}
         {showDropZone && (
           <DropOverlay 
             isVisible={true}

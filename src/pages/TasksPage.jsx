@@ -1,6 +1,6 @@
-// src/pages/TasksPage.jsx - Full file with fixed move to timeline
+// src/pages/TasksPage.jsx - FIXED VERSION
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
@@ -34,7 +34,7 @@ const TasksPage = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const {
-    tasks,
+    tasks, // This is an OBJECT: { "2024-12-10": [...], "2024-12-11": [...] }
     getTasksForDate,
     addTask,
     updateTask,
@@ -60,6 +60,7 @@ const TasksPage = () => {
   const [activeId, setActiveId] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [orderedUntimedTasks, setOrderedUntimedTasks] = useState([]);
+  const [dndKey, setDndKey] = useState(0);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [addFormMode, setAddFormMode] = useState('quick');
@@ -81,12 +82,35 @@ const TasksPage = () => {
   const isViewMoreOpenRef = useRef(false);
   const isInitialLoadRef = useRef(true);
   const prevUntimedTasksRef = useRef([]);
+  const isDraggingRef = useRef(false);
 
   const tasksForDate = getTasksForDate(selectedDate);
   const timedTasks = tasksForDate.filter(t => t.timeSchedule?.start);
   const untimedTasks = tasksForDate.filter(t => !t.timeSchedule?.start);
 
-  // Load saved order from localStorage - ONLY on initial load or when untimedTasks changes
+  // Detect mobile and reset DnD context when size changes
+  useEffect(() => {
+    const handleResize = () => {
+      const newIsMobile = window.innerWidth <= 768;
+      if (newIsMobile !== isMobile) {
+        setIsMobile(newIsMobile);
+        setDndKey(prev => prev + 1);
+        setShowDropZone(false);
+        setActiveId(null);
+        isDraggingRef.current = false;
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobile]);
+
+  // Reset DnD context when component mounts
+  useEffect(() => {
+    setDndKey(prev => prev + 1);
+  }, []);
+
+  // Load saved order from localStorage
   useEffect(() => {
     if (untimedTasks.length === 0) {
       if (orderedUntimedTasks.length > 0) {
@@ -132,21 +156,13 @@ const TasksPage = () => {
     }
   }, [untimedTasks, orderedUntimedTasks]);
 
-  // Detect mobile
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
+  // Create sensors with mobile/desktop specific settings
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
-        delay: 100,
-        tolerance: 5,
+        distance: isMobile ? 5 : 8,
+        delay: isMobile ? 50 : 100,
+        tolerance: isMobile ? 3 : 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -304,18 +320,15 @@ const TasksPage = () => {
     setShowMoveModal(true);
   }, []);
 
-  // ============ FIXED: handleSaveMove ============
   const handleSaveMove = useCallback((timeData) => {
     if (!taskToMove) {
       showToast('No task selected to move.', 'error', { duration: 3000 });
       return;
     }
 
-    // Get the date from the task or use the selected date
     const taskDate = taskToMove.date || format(selectedDate, 'yyyy-MM-dd');
     const dateObj = new Date(taskDate);
     
-    // Make a copy of the task and add timeSchedule
     const updatedTask = {
       ...taskToMove,
       timeSchedule: {
@@ -324,15 +337,6 @@ const TasksPage = () => {
       }
     };
 
-    // Log for debugging
-    console.log('Moving task:', {
-      taskId: taskToMove.id,
-      taskTitle: taskToMove.title,
-      dateKey: taskDate,
-      updatedTask: updatedTask
-    });
-
-    // Update the task in the context
     const success = updateTask(dateObj, taskToMove.id, updatedTask);
 
     if (success) {
@@ -341,8 +345,8 @@ const TasksPage = () => {
       setTaskToMove(null);
       setShowDropZone(false);
       setActiveId(null);
+      isDraggingRef.current = false;
       
-      // Clear localStorage order since task was removed
       localStorage.removeItem('taskBoardOrder');
     } else {
       console.error('Failed to move task:', {
@@ -359,6 +363,7 @@ const TasksPage = () => {
     setTaskToMove(null);
     setShowDropZone(false);
     setActiveId(null);
+    isDraggingRef.current = false;
   }, []);
 
   const handleCloseDetail = useCallback(() => {
@@ -511,28 +516,30 @@ const TasksPage = () => {
 
   // ============ DRAG HANDLERS ============
   
-  const handleDragStart = (event) => {
+  const handleDragStart = useCallback((event) => {
     const { active } = event;
     const task = orderedUntimedTasks.find(t => t.id === active.id);
     
     if (task) {
+      isDraggingRef.current = true;
       setActiveId(active.id);
       setShowDropZone(true);
     }
-  };
+  }, [orderedUntimedTasks]);
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = useCallback((event) => {
     const { active, over } = event;
     
     const draggedTask = orderedUntimedTasks.find(t => t.id === active.id);
     
+    isDraggingRef.current = false;
+
     if (!draggedTask) {
       setActiveId(null);
       setShowDropZone(false);
       return;
     }
 
-    // Case 1: Dropped on the timeline drop zone -> Move to timeline
     if (over?.data?.current?.type === 'timeline') {
       setTaskToMove(draggedTask);
       setShowMoveModal(true);
@@ -541,7 +548,6 @@ const TasksPage = () => {
       return;
     }
 
-    // Case 2: Dropped on another task card -> Reorder
     if (over && over.id !== active.id) {
       const overData = over.data?.current;
       if (overData?.type === 'task-board-card') {
@@ -560,17 +566,86 @@ const TasksPage = () => {
 
     setActiveId(null);
     setShowDropZone(false);
-  };
+  }, [orderedUntimedTasks]);
 
-  const handleDragCancel = () => {
+  const handleDragCancel = useCallback(() => {
+    isDraggingRef.current = false;
     setActiveId(null);
     setShowDropZone(false);
-  };
+  }, []);
 
   const activeTask = orderedUntimedTasks.find(t => t.id === activeId);
 
+  // Memoize the DnD context
+  const dndContext = useMemo(() => (
+    <DndContext
+      key={dndKey}
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+      <div className="task-dashboard-content">
+        <div className="timeline-wrapper">
+          <DropOverlay 
+            isVisible={showDropZone}
+            isOver={false}
+            isMobile={false}
+            position="timeline"
+          />
+          <Timeline
+            tasks={timedTasks}
+            highlightedTaskId={highlightedTaskId}
+            onViewTask={handleViewTask}
+            onEditTask={handleEditTask}
+            onDeleteTask={handleDeleteTask}
+            registerTaskRef={registerTaskRef}
+          />
+        </div>
+
+        <TaskBoard
+          tasks={orderedUntimedTasks}
+          onViewTask={handleViewTask}
+          onEditTask={handleEditTask}
+          onDeleteTask={handleDeleteTask}
+          showDropZone={showDropZone}
+          isMobile={isMobile}
+        />
+      </div>
+
+      <DragOverlay
+        dropAnimation={{
+          sideEffects: defaultDropAnimationSideEffects({
+            styles: {
+              active: {
+                opacity: '0.4',
+              },
+            },
+          }),
+        }}
+      >
+        {activeTask ? (
+          <div className="task-board-card dragging-overlay">
+            <div className="task-card-content">
+              <h4 className="task-card-title">{activeTask.title}</h4>
+              <div className="task-drag-overlay-hint">
+                <span className="material-icons">drag_handle</span>
+                <span>Drop on the timeline to add time</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+  ), [dndKey, sensors, handleDragStart, handleDragEnd, handleDragCancel, 
+      showDropZone, timedTasks, highlightedTaskId, handleViewTask, 
+      handleEditTask, handleDeleteTask, registerTaskRef, orderedUntimedTasks,
+      isMobile, activeTask]);
+
   return (
     <div className="task-dashboard">
+      {/* Pass the tasks object directly - DateNavigator will handle it */}
       <DateNavigator
         date={selectedDate}
         onDateChange={setSelectedDate}
@@ -579,65 +654,7 @@ const TasksPage = () => {
         onAddTask={handleAddTask}
       />
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragCancel={handleDragCancel}
-      >
-        <div className="task-dashboard-content">
-          <div className="timeline-wrapper">
-            <DropOverlay 
-              isVisible={showDropZone}
-              isOver={false}
-              isMobile={false}
-              position="timeline"
-            />
-            <Timeline
-              tasks={timedTasks}
-              highlightedTaskId={highlightedTaskId}
-              onViewTask={handleViewTask}
-              onEditTask={handleEditTask}
-              onDeleteTask={handleDeleteTask}
-              registerTaskRef={registerTaskRef}
-            />
-          </div>
-
-          <TaskBoard
-            tasks={orderedUntimedTasks}
-            onViewTask={handleViewTask}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-            showDropZone={showDropZone}
-            isMobile={isMobile}
-          />
-        </div>
-
-        <DragOverlay
-          dropAnimation={{
-            sideEffects: defaultDropAnimationSideEffects({
-              styles: {
-                active: {
-                  opacity: '0.4',
-                },
-              },
-            }),
-          }}
-        >
-          {activeTask ? (
-            <div className="task-board-card dragging-overlay">
-              <div className="task-card-content">
-                <h4 className="task-card-title">{activeTask.title}</h4>
-                <div className="task-drag-overlay-hint">
-                  <span className="material-icons">drag_handle</span>
-                  <span>Drop on the timeline to add time</span>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+      {dndContext}
 
       {showScrollTop && (
         <button className="scroll-to-top-btn" onClick={scrollToTop}>
