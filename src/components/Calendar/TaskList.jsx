@@ -96,9 +96,10 @@ const TaskList = ({
     setMenuOpen(null);
   };
 
+  // MODIFIED: Edit handler - now calls onEditTask with the task ID
   const handleEdit = (taskId) => {
     if (onEditTask) {
-      onEditTask(taskId);
+      onEditTask(taskId); // This now triggers navigation in CalendarPage
     }
     setMenuOpen(null);
   };
@@ -286,7 +287,7 @@ const TaskList = ({
                     </button>
                     <button 
                       className="dropdown-item edit"
-                      onClick={() => handleEdit(task.id)}
+                      onClick={() => handleEdit(task.id)} // MODIFIED: Pass task ID
                     >
                       <span className="material-icons" style={{ fontSize: '18px' }}>edit</span>
                       Edit

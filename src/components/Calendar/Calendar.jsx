@@ -1,8 +1,8 @@
 // src/components/Calendar/Calendar.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCalendar } from '../../hooks/useCalendar';
-import { useTasksContext } from '../../contexts/TasksContext';
+import { useTasksContext } from '../../contexts/TasksContextSupabase';
 import { useToast } from '../../contexts/ToastContext';
 import CalendarHeader from './CalendarHeader';
 import CalendarGrid from './CalendarGrid';
@@ -31,6 +31,8 @@ const Calendar = () => {
     clearDeletedTask,
     lastDeletedTask,
     restoreDeletedTask,
+    loadTasksForDate, // ✅ ADDED
+    loading,          // ✅ ADDED
   } = useTasksContext();
 
   // Quick add state
@@ -54,6 +56,25 @@ const Calendar = () => {
   const [animationDirection, setAnimationDirection] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+
+  // ✅ NEW: Load tasks when selected date changes
+  useEffect(() => {
+    const loadTasks = async () => {
+      if (selectedDate) {
+        setIsLoadingTasks(true);
+        try {
+          await loadTasksForDate(selectedDate);
+        } catch (error) {
+          console.error('Error loading tasks for date:', error);
+          showToast('Failed to load tasks', 'error', { duration: 3000 });
+        } finally {
+          setIsLoadingTasks(false);
+        }
+      }
+    };
+    loadTasks();
+  }, [selectedDate, loadTasksForDate, showToast]);
 
   const handleDateClick = (date) => {
     setSelectedDate(date);
@@ -140,39 +161,28 @@ const Calendar = () => {
 
   const handleViewMore = (task) => {
     // Navigate to TasksPage with task and date
-    const dateKey = selectedDateKey; // You have this from earlier
+    const dateKey = selectedDateKey;
     navigate(`/tasks?date=${dateKey}&taskId=${task.id}`);
   };
 
   const handleDeleteTask = (taskId) => {
     if (!selectedDate || !selectedDateKey) return;
 
-    console.log('=== DELETE TASK ===');
-    console.log('Selected date key:', selectedDateKey);
-
     const taskToDelete = tasks[selectedDateKey]?.find(t => t.id === taskId);
-    console.log('Task to delete:', taskToDelete);
-
     if (!taskToDelete) return;
 
     const taskData = { ...taskToDelete };
     const dateKey = selectedDateKey;
-    console.log('Task data captured:', taskData);
-    console.log('Date key captured:', dateKey);
 
     const success = removeTaskById(selectedDate, taskId);
-    console.log('Delete success:', success);
 
     if (success) {
-      console.log('Showing toast for:', taskData.title);
       showToast(
         `Task Removed: "${taskData.title}"`,
         'undo',
         {
           duration: 10000,
           onUndo: () => {
-            console.log('=== UNDO CALLED ===');
-            console.log('Restoring with:', { dateKey, taskData });
             restoreDeletedTask(dateKey, taskData);
           }
         }
@@ -194,8 +204,8 @@ const Calendar = () => {
         state: {
           mode: 'edit',
           taskId: task.id,
-          date: selectedDate, // Pass the Date object
-          taskData: task // Pass full task data to avoid race conditions
+          date: selectedDate,
+          taskData: task
         }
       });
     } else {
@@ -262,6 +272,7 @@ const Calendar = () => {
             onClose={handlePanelClose}
             date={selectedDate}
             taskCount={remainingTasks}
+            loading={isLoadingTasks} // ✅ PASS LOADING STATE
           >
             <div className="quick-add-container">
               <div className={`quick-add-wrapper ${quickAddError ? 'shake' : ''}`}>
@@ -289,13 +300,20 @@ const Calendar = () => {
               )}
             </div>
 
-            <TaskList
-              tasks={tasksForSelectedDate}
-              onToggleTask={handleToggleTask}
-              onDeleteTask={handleDeleteTask}
-              onEditTask={handleEditTask}
-              onViewMore={handleViewMore}
-            />
+            {isLoadingTasks ? (
+              <div className="task-list-loading">
+                <span className="material-icons spinning">refresh</span>
+                <span>Loading tasks...</span>
+              </div>
+            ) : (
+              <TaskList
+                tasks={tasksForSelectedDate}
+                onToggleTask={handleToggleTask}
+                onDeleteTask={handleDeleteTask}
+                onEditTask={handleEditTask}
+                onViewMore={handleViewMore}
+              />
+            )}
           </SidePanel>
         </div>
 

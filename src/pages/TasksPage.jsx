@@ -1,5 +1,4 @@
-// src/pages/TasksPage.jsx - FIXED VERSION
-
+// src/pages/TasksPage.jsx - FIXED DISPLAY VERSION
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -17,7 +16,7 @@ import {
   arrayMove,
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import { useTasksContext } from '../contexts/TasksContext';
+import { useTasksContext } from '../contexts/TasksContextSupabase';
 import { useToast } from '../contexts/ToastContext';
 import DateNavigator from '../components/Tasks/DateNavigator';
 import Timeline from '../components/Tasks/Timeline/Timeline';
@@ -34,12 +33,14 @@ const TasksPage = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const {
-    tasks, // This is an OBJECT: { "2024-12-10": [...], "2024-12-11": [...] }
+    tasks,
     getTasksForDate,
     addTask,
     updateTask,
     removeTaskById,
     restoreDeletedTask,
+    loadTasksForDate, // ✅ ADDED
+    loading,          // ✅ ADDED
   } = useTasksContext();
 
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -61,6 +62,7 @@ const TasksPage = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [orderedUntimedTasks, setOrderedUntimedTasks] = useState([]);
   const [dndKey, setDndKey] = useState(0);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [addFormMode, setAddFormMode] = useState('quick');
@@ -83,6 +85,25 @@ const TasksPage = () => {
   const isInitialLoadRef = useRef(true);
   const prevUntimedTasksRef = useRef([]);
   const isDraggingRef = useRef(false);
+  const editStateProcessedRef = useRef(false);
+
+  // ✅ NEW: Load tasks when selected date changes
+  useEffect(() => {
+    const loadTasks = async () => {
+      if (selectedDate) {
+        setIsLoadingTasks(true);
+        try {
+          await loadTasksForDate(selectedDate);
+        } catch (error) {
+          console.error('Error loading tasks for date:', error);
+          showToast('Failed to load tasks', 'error', { duration: 3000 });
+        } finally {
+          setIsLoadingTasks(false);
+        }
+      }
+    };
+    loadTasks();
+  }, [selectedDate, loadTasksForDate, showToast]);
 
   const tasksForDate = getTasksForDate(selectedDate);
   const timedTasks = tasksForDate.filter(t => t.timeSchedule?.start);
@@ -170,6 +191,7 @@ const TasksPage = () => {
     })
   );
 
+  // Handle manual mode from state
   useEffect(() => {
     const state = location.state;
     if (state?.mode === 'manual') {
@@ -180,6 +202,75 @@ const TasksPage = () => {
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, navigate]);
+
+  // Handle edit mode from state (from Calendar.jsx)
+  useEffect(() => {
+    const state = location.state;
+    
+    if (editStateProcessedRef.current) return;
+    
+    if (state?.mode === 'edit' && state?.taskId) {
+      editStateProcessedRef.current = true;
+      
+      if (state.taskData) {
+        console.log('Opening edit form with task data from state:', state.taskData);
+        setEditingTask(state.taskData);
+        setShowEditForm(true);
+        setHasUnsavedChanges(false);
+        setAddFormMode('edit');
+        
+        if (state.date) {
+          setSelectedDate(new Date(state.date));
+        }
+        
+        navigate(location.pathname, { replace: true, state: {} });
+        return;
+      }
+      
+      const currentTasks = getTasksForDate(selectedDate);
+      const task = currentTasks.find(t => t.id === state.taskId);
+      
+      if (task) {
+        console.log('Opening edit form for task:', task);
+        setEditingTask(task);
+        setShowEditForm(true);
+        setHasUnsavedChanges(false);
+        setAddFormMode('edit');
+      } else {
+        let foundTask = null;
+        for (const dateKey in tasks) {
+          const dateTasks = tasks[dateKey];
+          const found = dateTasks.find(t => t.id === state.taskId);
+          if (found) {
+            foundTask = found;
+            break;
+          }
+        }
+        
+        if (foundTask) {
+          console.log('Found task on different date:', foundTask);
+          setEditingTask(foundTask);
+          setShowEditForm(true);
+          setHasUnsavedChanges(false);
+          setAddFormMode('edit');
+          const taskDate = new Date(foundTask.date || foundTask.createdAt);
+          if (!isNaN(taskDate.getTime())) {
+            setSelectedDate(taskDate);
+          }
+        } else {
+          console.error('Task not found for editing:', state.taskId);
+          showToast('Task not found. Please try again.', 'error', { duration: 3000 });
+        }
+      }
+      
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, selectedDate, getTasksForDate, tasks, navigate, showToast]);
+
+  // Reset editStateProcessedRef when location changes
+  useEffect(() => {
+    editStateProcessedRef.current = false;
+  }, [location.pathname]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -594,14 +685,21 @@ const TasksPage = () => {
             isMobile={false}
             position="timeline"
           />
-          <Timeline
-            tasks={timedTasks}
-            highlightedTaskId={highlightedTaskId}
-            onViewTask={handleViewTask}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-            registerTaskRef={registerTaskRef}
-          />
+          {isLoadingTasks ? (
+            <div className="timeline-loading">
+              <span className="material-icons spinning">refresh</span>
+              <span>Loading tasks...</span>
+            </div>
+          ) : (
+            <Timeline
+              tasks={timedTasks}
+              highlightedTaskId={highlightedTaskId}
+              onViewTask={handleViewTask}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTask}
+              registerTaskRef={registerTaskRef}
+            />
+          )}
         </div>
 
         <TaskBoard
@@ -641,11 +739,10 @@ const TasksPage = () => {
   ), [dndKey, sensors, handleDragStart, handleDragEnd, handleDragCancel, 
       showDropZone, timedTasks, highlightedTaskId, handleViewTask, 
       handleEditTask, handleDeleteTask, registerTaskRef, orderedUntimedTasks,
-      isMobile, activeTask]);
+      isMobile, activeTask, isLoadingTasks]);
 
   return (
     <div className="task-dashboard">
-      {/* Pass the tasks object directly - DateNavigator will handle it */}
       <DateNavigator
         date={selectedDate}
         onDateChange={setSelectedDate}

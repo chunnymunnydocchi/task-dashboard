@@ -7,7 +7,8 @@ const SidePanel = ({
   onClose, 
   date, 
   children,
-  taskCount = 0 
+  taskCount = 0,
+  loading = false // ✅ ADDED
 }) => {
   const panelRef = useRef(null);
 
@@ -80,7 +81,9 @@ const SidePanel = ({
         <div className="side-panel-header">
           <div className="header-content">
             <h2>{formatDate(date)}</h2>
-            <span className="task-count-badge">{taskCount} tasks</span>
+            <span className="task-count-badge">
+              {loading ? '...' : `${taskCount} tasks`}
+            </span>
           </div>
           <button 
             className="close-btn" 
@@ -92,11 +95,18 @@ const SidePanel = ({
         </div>
 
         <div className="side-panel-content">
-          {children || (
-            <div className="empty-state">
-              <p>No tasks for this day</p>
-              <p className="empty-subtitle">Add a task using the quick input below</p>
+          {loading ? (
+            <div className="loading-state">
+              <span className="material-icons spinning">refresh</span>
+              <span>Loading tasks...</span>
             </div>
+          ) : (
+            children || (
+              <div className="empty-state">
+                <p>No tasks for this day</p>
+                <p className="empty-subtitle">Add a task using the quick input below</p>
+              </div>
+            )
           )}
         </div>
       </div>

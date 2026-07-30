@@ -1,4 +1,4 @@
-// src/components/TaskForm/TaskForm.jsx
+// src/components/TaskForm/TaskForm.jsx - FIXED SCROLL VERSION
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import './TaskForm.css';
@@ -31,6 +31,14 @@ const TaskForm = ({
   
   // NEW: Track initial data for detecting changes
   const [initialFormData, setInitialFormData] = useState(null);
+
+  // NEW: Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   // Initialize form based on mode
   useEffect(() => {
@@ -198,7 +206,7 @@ const TaskForm = ({
   };
 
   const getCancelButtonText = () => {
-    if (mode === 'edit') return 'Discard Changes'; // CHANGED: "Cancel" → "Discard Changes"
+    if (mode === 'edit') return 'Discard Changes';
     if (mode === 'quick') return 'Edit Later';
     return 'Cancel';
   };

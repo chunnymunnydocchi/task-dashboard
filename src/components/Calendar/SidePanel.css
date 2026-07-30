@@ -231,6 +231,41 @@
   animation: fadeIn 0.3s ease;
 }
 
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #8a7e6e;
+  gap: 12px;
+}
+
+.loading-state .material-icons.spinning {
+  animation: spin 1s linear infinite;
+  font-size: 32px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.task-list-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #8a7e6e;
+  gap: 12px;
+}
+
+.task-list-loading .material-icons.spinning {
+  animation: spin 1s linear infinite;
+  font-size: 32px;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

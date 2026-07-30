@@ -46,6 +46,7 @@ const DatePicker = ({
 
     const days = getDaysInMonth();
 
+    // ✅ FIXED: Now sync - uses tasksData directly
     const hasTasksOnDay = (day) => {
         if (!day) return false;
         const dateKey = format(day, 'yyyy-MM-dd');
@@ -77,11 +78,8 @@ const DatePicker = ({
         onDateSelect(today);
     };
 
-    // MonthPicker gives us month NAME and year NUMBER
     const handleMonthPickerConfirm = (monthName, year) => {
-        // Find the month index from the name
         const monthIndex = monthNames.indexOf(monthName);
-        // Create new date with the 1st of the month
         const newDate = new Date(year, monthIndex, 1);
         setViewDate(newDate);
         setShowMonthPicker(false);
@@ -192,7 +190,7 @@ const DatePicker = ({
 
             {showMonthPicker && (
                 <MonthPicker
-                    currentMonth={month}  // Pass month INDEX (number)
+                    currentMonth={month}
                     currentYear={year}
                     onConfirm={handleMonthPickerConfirm}
                     onCancel={() => setShowMonthPicker(false)}

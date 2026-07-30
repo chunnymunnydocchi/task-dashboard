@@ -1,3 +1,4 @@
+// src/components/Toast/UndoToast.jsx
 import React, { useEffect, useState } from 'react';
 import './UndoToast.css';
 
@@ -9,6 +10,7 @@ const UndoToast = ({
 }) => {
   const [progress, setProgress] = useState(100);
   const [isVisible, setIsVisible] = useState(true);
+  const [isUndoing, setIsUndoing] = useState(false);
 
   useEffect(() => {
     if (!message) return;
@@ -29,14 +31,23 @@ const UndoToast = ({
     return () => clearInterval(interval);
   }, [message, duration, onDismiss]);
 
-  const handleUndo = (e) => {
+  const handleUndo = async (e) => {
     e.stopPropagation();
     e.preventDefault();
+    
+    if (isUndoing) return; // Prevent double clicks
+    
+    setIsUndoing(true);
     setIsVisible(false);
-    setTimeout(() => {
-      onUndo();
-      onDismiss();
-    }, 300);
+    
+    try {
+      await onUndo(); // Wait for undo to complete
+    } catch (error) {
+      console.error('Undo failed:', error);
+    } finally {
+      setIsUndoing(false);
+      setTimeout(onDismiss, 300);
+    }
   };
 
   const handleDismiss = (e) => {
@@ -73,8 +84,9 @@ const UndoToast = ({
             onClick={handleUndo}
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
+            disabled={isUndoing}
           >
-            Undo
+            {isUndoing ? 'Restoring...' : 'Undo'}
           </button>
           <button 
             className="undo-toast-close-btn" 

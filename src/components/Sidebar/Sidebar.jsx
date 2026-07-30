@@ -57,7 +57,7 @@ function Sidebar({ isOpen, onClose, onToggle }) { // NEW props
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <img src={logo} alt="Task Dashboard Logo" className="logo-img" />
-            <h2>Task Calendar</h2>
+            <h2>Todado-a-list</h2>
           </div>
           {/* Close button - only visible on mobile when open */}
           <button 

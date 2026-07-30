@@ -1,11 +1,11 @@
-// src/App.js
+// src/App.js - CLEAN VERSION
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useState } from 'react';
 import Sidebar from './components/Sidebar/Sidebar';
 import CalendarPage from './pages/CalendarPage';
 import TasksPage from './pages/TasksPage';
 import { ToastProvider } from './contexts/ToastContext';
-import { TasksProvider } from './contexts/TasksContext';
+import { TasksProvider } from './contexts/TasksContextSupabase';
 import './App.css';
 
 function App() {
@@ -24,8 +24,8 @@ function App() {
       <ToastProvider>
         <TasksProvider>
           <div className="app">
-            <Sidebar 
-              isOpen={isSidebarOpen} 
+            <Sidebar
+              isOpen={isSidebarOpen}
               onClose={closeSidebar}
               onToggle={toggleSidebar}
             />
